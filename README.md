@@ -1,4 +1,4 @@
-# Koha Interlibrary Loans Libkey Lending Tool backend
+# Koha Interlibrary Loans Incdocs Lending Tool backend
 
 This backend provides the ability to create Interlibrary Loan requests using the LibKey Lending Tool API service.
 

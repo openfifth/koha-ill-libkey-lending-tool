@@ -1,0 +1,48 @@
+{
+    "/libraries": {
+        "get": {
+            "x-mojo-to": "Com::PTFSEurope::IncDocs::Api#Libraries",
+            "operationId": "ApiIncDocsILLLibraries",
+            "tags": ["IncDocs", "Libraries"],
+            "parameters": [],
+            "produces": [
+                "application/json"
+            ],
+            "responses": {
+                "200": {
+                    "description": "The result of the libraries call"
+                }
+            }
+        }
+    },
+    "/ill_backend_availability_incdocs": {
+        "get": {
+            "x-mojo-to": "Com::PTFSEurope::IncDocs::Api#Backend_Availability",
+            "operationId": "IncDocsBackendAvailability",
+            "tags": ["ill","backend_availability"],
+            "parameters": [
+                {
+                    "name": "metadata",
+                    "in": "query",
+                    "description": "The metadata to use for checking availability",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "produces": [
+                "application/json"
+            ],
+            "responses": {
+                "200": {
+                    "description": "True or false"
+                },
+                "400": {
+                    "description": "Missing required metadata"
+                },
+                "404": {
+                    "description": "Not found"
+                }
+            }
+        }
+    }
+}
