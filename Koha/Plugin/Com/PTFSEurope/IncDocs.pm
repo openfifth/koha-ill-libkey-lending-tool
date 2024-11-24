@@ -659,7 +659,7 @@ sub create_submission {
     my $patron = Koha::Patrons->find( $params->{other}->{borrowernumber} );
 
     my $request = $params->{request};
-    $request->borrowernumber( $patron->borrowernumber );
+    $request->borrowernumber( $patron ? $patron->borrowernumber : undef );
     $request->branchcode( $params->{other}->{branchcode} );
     $request->status('NEW');
     $request->batch_id(
