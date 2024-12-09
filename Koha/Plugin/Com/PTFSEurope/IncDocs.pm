@@ -656,12 +656,15 @@ Create a local submission, for later IncDocs Lending Tool request creation
 sub create_submission {
     my ( $self, $params ) = @_;
 
+    my $unauthenticated_request =
+        C4::Context->preference("ILLOpacUnauthenticatedRequest") && !$params->{other}->{borrowernumber};
+
     my $patron = Koha::Patrons->find( $params->{other}->{borrowernumber} );
 
     my $request = $params->{request};
     $request->borrowernumber( $patron ? $patron->borrowernumber : undef );
     $request->branchcode( $params->{other}->{branchcode} );
-    $request->status('NEW');
+    $request->status( $unauthenticated_request ? 'UNAUTH' : 'NEW' );
     $request->batch_id(
         $params->{other}->{ill_batch_id} ? $params->{other}->{ill_batch_id} : $params->{other}->{batch_id} );
     $request->backend( $self->name );
@@ -677,6 +680,15 @@ sub create_submission {
 
     # Now store the core equivalents
     $self->create_illrequestattributes( $request, $params->{other}, 1 );
+
+    if ($unauthenticated_request) {
+        my $unauthenticated_notes_text =
+              "Unauthenticated request.\nFirst name: $params->{other}->{'unauthenticated_first_name'}"
+            . ".\nLast name: $params->{other}->{'unauthenticated_last_name'}."
+            . "\nEmail: $params->{other}->{'unauthenticated_email'}.";
+        $request->append_to_note($unauthenticated_notes_text);
+        $request->notesopac($unauthenticated_notes_text)->store;
+    }
 
     return $request;
 }
@@ -975,7 +987,9 @@ sub capabilities {
         provides_batch_requests => sub { return 1; },
 
         # We can create ILL requests with data passed from the API
-        create_api => sub { $self->create_api(@_) }
+        create_api => sub { $self->create_api(@_) },
+
+        opac_unauthenticated_ill_requests => sub { return 1; }
     };
 
     return $capabilities->{$name};
