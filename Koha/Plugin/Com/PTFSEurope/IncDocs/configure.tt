@@ -71,7 +71,7 @@
         </div>
 
         <input type="hidden" name="save" value="1" />
-        <input id="submit_button" type="submit" value="Save configuration" />
+        <input class="btn btn-primary" id="submit_button" type="submit" value="Save configuration" />
     </form>
 
     <hr/>
