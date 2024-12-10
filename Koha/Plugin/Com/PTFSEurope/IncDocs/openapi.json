@@ -11,6 +11,9 @@
             "responses": {
                 "200": {
                     "description": "The result of the libraries call"
+                },
+                "500": {
+                    "description": "API error"
                 }
             }
         }
