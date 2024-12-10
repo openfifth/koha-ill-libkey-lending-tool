@@ -77,6 +77,13 @@
             <p>The Koha patron attribute type code used to match the patron record with the IncDocs library id field.</p>
         </div>
 
+        <h4 class="section_header">Library additional fields configuration</h4>
+        <div id="incdocs_library_libraryidfield" class="config_field">
+            <label for="incdocs_library_libraryidfield_input"><strong>IncDocs Library ID</strong> field: </label>
+            <input id="incdocs_library_libraryidfield_input" class="required_input" placeholder="Enter library additional field code" type="text" name="library_libraryidfield" value="[% config.library_libraryidfield | html %]">
+            <p>The Koha library additional field code used to match the library record with the IncDocs library id field.</p>
+        </div>
+
         <input type="hidden" name="save" value="1" />
         <input class="btn btn-primary" id="submit_button" type="submit" value="Save configuration" />
     </form>
