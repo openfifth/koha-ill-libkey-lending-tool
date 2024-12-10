@@ -91,14 +91,27 @@ sub Backend_Availability {
         );
     }
 
-    my $response = _make_request( 'GET', 'libraries/' . $incdocs_id->value . '/articles/pmid/123' )
-        ;    #local library_id / articles / pmig/doi/ [actual_value]
+    my $id_code  = $metadata->{doi} ? 'doi'            : 'pmid';
+    my $id_value = $metadata->{doi} ? $metadata->{doi} : $metadata->{pubmedid};
+    my $response =
+        _make_request( 'GET', 'libraries/' . $incdocs_id->value . '/articles/' . $id_code . '/' . $id_value );
 
-    if ($response) {
+    # TODO:
+    # Need to better ascertain availability here.
+    # Is an article available if openAccess = 1 regardless of illLibraryName?
+
+    if ( $response && $response->{data}->{illLibraryName} ) {
         return $c->render(
             status  => 200,
             openapi => {
                 success => "At library: " . $response->{data}->{illLibraryName},
+            }
+        );
+    } elsif ( $response && !$response->{data}->{illLibraryName} ) {
+        return $c->render(
+            status  => 404,
+            openapi => {
+                error => "Not found at any library",
             }
         );
     } else {
