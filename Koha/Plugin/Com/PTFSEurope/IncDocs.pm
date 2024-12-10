@@ -1547,7 +1547,7 @@ sub tool_step1 {
             [
                 {
                     'extended_attributes.attribute' => { '=' => $library->{id} },
-                    'extended_attributes.code'      => $self->{config}->{libraryidfield}
+                    'extended_attributes.code'      => $self->{config}->{patron_libraryidfield}
                 },
             ],
             { 'prefetch' => ['extended_attributes'] }
