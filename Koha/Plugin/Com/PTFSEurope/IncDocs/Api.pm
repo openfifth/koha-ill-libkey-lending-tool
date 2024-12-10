@@ -22,7 +22,7 @@ sub Libraries {
 
     my $response = _make_request( 'GET', 'libraries' );
 
-    if ( ! defined $response ) {
+    if ( !defined $response ) {
         return $c->render(
             status  => 500,
             openapi => {
@@ -31,12 +31,12 @@ sub Libraries {
                 error_description => 'Invalid or missing. Please check.',
             }
         );
-    }elsif ( $response->{data} ) {
+    } elsif ( $response->{data} ) {
         return $c->render(
             status  => 200,
             openapi => { data => $response->{data} }
         );
-    }else{
+    } else {
         return $c->render(
             status  => 500,
             openapi => {
@@ -54,6 +54,34 @@ sub Backend_Availability {
     my $metadata = $c->validation->param('metadata') || '';
     $metadata = decode_json( decode_base64( uri_unescape($metadata) ) );
 
+    my $library = Koha::Libraries->find( $metadata->{branchcode} );
+
+    my $plugin = Koha::Plugin::Com::PTFSEurope::IncDocs->new();
+    my $config = eval { decode_json( $plugin->retrieve_data("incdocs_config") // {} ) };
+
+    unless ( $config->{library_libraryidfield} ) {
+        return $c->render(
+            status  => 400,
+            openapi => {
+                error => 'Library id field not configured.',
+            }
+        );
+    }
+
+    my $additional_field =
+        Koha::AdditionalFields->search( { name => $config->{library_libraryidfield}, tablename => 'branches' } )->next;
+    my $incdocs_id = $library->additional_field_values->search(
+        { 'record_id' => $library->id, 'field_id' => $additional_field->id } )->next;
+
+    unless ($incdocs_id) {
+        return $c->render(
+            status  => 400,
+            openapi => {
+                error => 'Library ' . $library->branchname . ' does not have a value for ' . $additional_field->name,
+            }
+        );
+    }
+
     unless ( $metadata->{doi} || $metadata->{pubmedid} ) {
         return $c->render(
             status  => 400,
@@ -63,7 +91,7 @@ sub Backend_Availability {
         );
     }
 
-    my $response = _make_request( 'GET', 'libraries/1814/articles/pmid/123' )
+    my $response = _make_request( 'GET', 'libraries/' . $incdocs_id->value . '/articles/pmid/123' )
         ;    #local library_id / articles / pmig/doi/ [actual_value]
 
     if ($response) {
