@@ -2,9 +2,11 @@
 
 This backend provides the ability to create Interlibrary Loan requests using the LibKey Lending Tool API service.
 
-## Getting Started
+## Requirements
 
-This backend is only compatible with Koha 24.05+
+Only compatible with Koha 24.05+
+
+This backend requires [bug 38662](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=38662)
 
 ## Documentation
 
