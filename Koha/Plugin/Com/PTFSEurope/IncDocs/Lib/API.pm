@@ -22,7 +22,7 @@ use warnings;
 
 use LWP::UserAgent;
 use HTTP::Request;
-use JSON qw( encode_json );
+use JSON qw( decode_json encode_json );
 use CGI;
 use URI;
 
@@ -58,7 +58,7 @@ sub new {
         ua      => LWP::UserAgent->new,
         cgi     => new CGI,
         logger => Koha::Logger->get( { category => 'Koha.Plugin.Com.PTFSEurope.IncDocs.Lib.API' } ),
-        baseurl => $uri->scheme . "://" . $uri->host . ":" . $uri->port . "/api/v1/contrib/incdocs"
+        baseurl => $uri->scheme . "://" . $uri->host . ":" . $uri->port . "/api/v1/contrib/IncDocs"
     };
 
     bless $self, $class;
@@ -74,8 +74,8 @@ Make a call to /libraries
 sub Libraries {
     my ( $self ) = @_;
 
-    my $request = HTTP::Request->new( 'POST', $self->{baseurl} . "/libraries" );
-    return $self->{ua}->request($request);
+    my $request = HTTP::Request->new( 'GET', $self->{baseurl} . "/libraries" );
+    return decode_json($self->{ua}->request($request)->decoded_content);
 }
 
 1;

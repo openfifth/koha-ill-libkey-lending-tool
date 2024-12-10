@@ -1,0 +1,75 @@
+[% USE Branches %]
+[% INCLUDE 'doc-head-open.inc' %]
+ <title>Koha: IncDocs libraries</title>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body>
+<nav aria-label="Main navigation">
+  [% INCLUDE 'header.inc' %]
+  [% INCLUDE 'cat-search.inc' %]
+</nav>
+
+[% INCLUDE 'select2.inc' %]
+
+<div id="sub-header">
+    <nav id="breadcrumbs" aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+                <a href="/cgi-bin/koha/mainpage.pl" title="Home"><span class="visually-hidden-focusable">Home</span></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <a href="#">
+            <span>IncDocs libraries</span>
+            </a>
+        </li>
+        </ol>
+    </nav>
+    <nav id="shortcut" class="shortcut">
+    <div>
+        <a class="" href="/cgi-bin/koha/help.pl" id="helper"><i class="fa-solid fa-circle-question"></i> <span>Help</span></a>
+    </div>
+    </nav>
+</div>
+
+<main id="doc3" class='container-fluid'>
+<header>
+  <h1>IncDocs libraries</h1>
+  [% IF libraries.size == 0 %]
+    <h2>Found [% libraries.size %] libraries</h2>
+  [% END %]
+  [% IF error %]
+    <h3>[% error %] <a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3APTFSEurope%3A%3AIncDocs&amp;method=configure">Click here to configure the plugin</a></h3>
+  [% END %]
+</header>
+ </br>
+ <table>
+    <thead>
+        <tr>
+            <th>IncDocs ID</th>
+            <th>IncDocs Name</th>
+            <th>Koha patron record</th>
+            <th>Koha library record</th>
+        </tr>
+    </thead>
+    <tbody>
+        [% FOREACH library IN libraries %]
+            <tr>
+                <td>[% library.id %]</td>
+                <td>[% library.name %]</td>
+                [% IF library.patron %]
+                  <td>[%- INCLUDE 'patron-title.inc' patron => library.patron hide_patron_infos_if_needed => 1 -%]</td>
+                [% ELSE %]
+                  <td>Not mapped</td>
+                [% END %]
+                <td>N/A</td>
+            </tr>
+        [% END %]
+    </tbody>
+</table>
+</main>
+[% INCLUDE 'intranet-bottom.inc' %]
+</body>
+</html>

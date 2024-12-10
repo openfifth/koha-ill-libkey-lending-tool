@@ -27,7 +27,7 @@ use Koha::DateUtils qw( dt_from_string );
 use File::Basename qw( dirname );
 use CGI;
 
-use JSON           qw( encode_json decode_json to_json );
+use JSON qw( encode_json decode_json to_json );
 use C4::Installer;
 
 use Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API;
@@ -44,7 +44,7 @@ our $metadata = {
     minimum_version => '24.05.00.000',
     maximum_version => undef,
     version         => $VERSION,
-    description =>
+    description     =>
         'This backend provides the ability to create Interlibrary Loan requests using the LibKey Lending Tool API service.'
 };
 
@@ -82,8 +82,8 @@ sub configure {
         my $config   = $self->{config};
 
         $template->param(
-            config                      => $self->{config},
-            cwd                         => dirname(__FILE__)
+            config => $self->{config},
+            cwd    => dirname(__FILE__)
         );
         $self->output_html( $template->output() );
     } else {
@@ -150,8 +150,8 @@ sub availability_check_info {
     my $endpoint = '/api/v1/contrib/' . $self->api_namespace . '/ill_backend_availability_incdocs?metadata=';
 
     return {
-        endpoint         => $endpoint,
-        name             => $metadata->{name},
+        endpoint => $endpoint,
+        name     => $metadata->{name},
     };
 }
 
@@ -166,10 +166,10 @@ Required method utilized by I<Koha::ILL::Request> load_backend
 sub new_ill_backend {
     my ( $self, $params ) = @_;
 
-    my $api        = Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API->new($VERSION);
+    my $api = Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API->new($VERSION);
 
-    $self->{_api}      = $api;
-    $self->{_logger}                 = $params->{logger} if ( $params->{logger} );
+    $self->{_api}    = $api;
+    $self->{_logger} = $params->{logger} if ( $params->{logger} );
 
     return $self;
 }
@@ -574,6 +574,7 @@ sub migrate {
     my $migrating_from = $request->backend;
 
     if ( $request->status eq 'REQ' ) {
+
         # The orderid is no longer applicable
         $request->orderid(undef);
     }
@@ -1086,7 +1087,7 @@ sub status_graph {
             ui_method_icon => 'fa-plus'
         },
         MARK_NEW => {
-            prev_actions   => ['ERROR', 'MIG'],
+            prev_actions   => [ 'ERROR', 'MIG' ],
             id             => 'MARK_NEW',
             name           => 'New request',
             ui_method_name => 'Mark request NEW',
@@ -1112,7 +1113,7 @@ sub status_graph {
             name           => 'Switched provider',
             ui_method_name => 'Switch provider',
             method         => 'migrate',
-            next_actions   => [ 'MARK_NEW', 'GENREQ', 'KILL', 'MIG'],
+            next_actions   => [ 'MARK_NEW', 'GENREQ', 'KILL', 'MIG' ],
             ui_method_icon => 'fa-search',
         },
     };
@@ -1224,7 +1225,7 @@ sub create_api {
     # We merge the supplied core metadata with the IncDocs Lending Tool
     # equivalents
     foreach my $attr ( @{ $body->{extended_attributes} } ) {
-        my $prop    = $attr->{type};
+        my $prop         = $attr->{type};
         my $incdocs_prop = find_core_to_incdocs($prop);
         if ($incdocs_prop) {
             my @value = map { $_->{type} eq $incdocs_prop ? $_->{value} : () } @{ $body->{extended_attributes} };
@@ -1510,6 +1511,55 @@ sub _logger {
     my ( $self, $logger ) = @_;
     $self->{_logger} = $logger if ($logger);
     return $self->{_logger};
+}
+
+=head3 tool
+
+=cut
+
+sub tool {
+    my ( $self, $args ) = @_;
+
+    $self->tool_step1();
+}
+
+sub tool_step1 {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{'cgi'};
+
+    my $template = $self->get_template( { file => 'tool-step1.tt' } );
+
+    my $incdocs =
+        Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend( { logger => Koha::ILL::Request::Logger->new } );
+    my $response = $incdocs->{_api}->Libraries();
+
+    if ( $response->{status} && $response->{error} ) {
+        $template->param( 'error' => $response->{error} . ' - ' . $response->{error_description} );
+        $self->output_html( $template->output() );
+        return;
+    }
+
+    my $libraries = $response->{data};
+
+    # iterate on libraries
+    foreach my $library (@$libraries) {
+        my $patron = Koha::Patrons->search(
+            [
+                {
+                    'extended_attributes.attribute' => { '=' => $library->{id} },
+                    'extended_attributes.code'      => $self->{config}->{libraryidfield}
+                },
+            ],
+            { 'prefetch' => ['extended_attributes'] }
+        )->last;
+
+        if ($patron) {
+            $library->{patron} = $patron;
+        }
+    }
+
+    $template->param( 'libraries' => $libraries );
+    $self->output_html( $template->output() );
 }
 
 1;

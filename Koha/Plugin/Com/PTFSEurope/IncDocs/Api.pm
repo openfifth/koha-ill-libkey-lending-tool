@@ -20,7 +20,32 @@ Make a call to /libraries
 sub Libraries {
     my $c = shift->openapi->valid_input or return;
 
-    return _make_request( 'GET', 'libraries' );
+    my $response = _make_request( 'GET', 'libraries' );
+
+    if ( ! defined $response ) {
+        return $c->render(
+            status  => 500,
+            openapi => {
+                status            => '500',
+                error             => 'Plugin configuration',
+                error_description => 'Invalid or missing. Please check.',
+            }
+        );
+    }elsif ( $response->{data} ) {
+        return $c->render(
+            status  => 200,
+            openapi => { data => $response->{data} }
+        );
+    }else{
+        return $c->render(
+            status  => 500,
+            openapi => {
+                status            => $response->{status},
+                error             => $response->{error},
+                error_description => $response->{error_description},
+            }
+        );
+    }
 }
 
 sub Backend_Availability {
@@ -69,7 +94,9 @@ sub _make_request {
     my ( $method, $endpoint_url, $payload ) = @_;
 
     my $plugin = Koha::Plugin::Com::PTFSEurope::IncDocs->new();
-    my $config = decode_json( $plugin->retrieve_data("incdocs_config") || {} );
+    my $config = eval { decode_json( $plugin->retrieve_data("incdocs_config") // {} ) };
+
+    return undef unless $config;
 
     my $incdocs_api_url = 'https://lendingtool-api.thirdiron.com/public/v1/libraryGroups';
     my $access_token    = $config->{access_token};
