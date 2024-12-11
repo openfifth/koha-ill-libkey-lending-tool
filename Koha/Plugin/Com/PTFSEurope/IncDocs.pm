@@ -992,12 +992,12 @@ sub status_graph {
         # Override REQ so we can rename the button
         # Talk about a sledgehammer to crack a nut
         REQ => {
-            prev_actions   => [ 'REQREV', 'QUEUED' ],
+            prev_actions   => [ 'NEW', 'REQREV', 'QUEUED', 'CANCREQ' ],
             id             => 'REQ',
             name           => 'Requested',
-            ui_method_name => 'Request from IncDocs Lending Tool',
+            ui_method_name => 'Request from IncDocs',
             method         => 'confirm',
-            next_actions   => [ 'REQREV', 'CHK' ],
+            next_actions   => [ 'REQREV', 'COMP', 'CHK' ],
             ui_method_icon => 'fa-check',
         },
         MIG => {
