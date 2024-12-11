@@ -120,7 +120,7 @@ sub Backend_Availability {
         return $c->render(
             status  => 404,
             openapi => {
-                error => 'Provided doi or pubmedid is not available in ReprintsDesk',
+                error => 'Provided doi or pubmedid is not available in IncDocs',
             }
         );
     }
