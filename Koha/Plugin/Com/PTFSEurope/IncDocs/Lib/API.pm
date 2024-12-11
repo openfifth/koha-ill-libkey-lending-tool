@@ -78,4 +78,22 @@ sub Libraries {
     return decode_json($self->{ua}->request($request)->decoded_content);
 }
 
+
+=head3 Libraries
+
+Make a call to /libraries
+
+=cut
+
+sub Backend_Availability {
+    my ( $self, $params ) = @_;
+
+    my $request = HTTP::Request->new(
+        'GET',
+        $self->{baseurl} . "/ill_backend_availability_incdocs?metadata=" . $params->{metadata}
+    );
+
+    return decode_json( $self->{ua}->request($request)->decoded_content );
+}
+
 1;

@@ -32,6 +32,7 @@ use C4::Installer;
 
 use Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API;
 use Koha::AdditionalFields;
+use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
@@ -808,6 +809,11 @@ the status graph
 sub confirm {
     my ( $self, $params ) = @_;
 
+    my $stage = $params->{other}->{stage};
+    if ( !$stage || 'availability' eq $stage ) {
+        return $self->availability($params);
+    }
+
     my $return = $self->create_request( $params->{request} );
 
     my $return_value = {
@@ -980,7 +986,7 @@ sub status_graph {
             ui_method_icon => 0,
         },
         COMP => {
-            prev_actions   => [ 'ERROR' ],
+            prev_actions   => ['ERROR'],
             id             => 'COMP',
             name           => 'Order Complete',
             ui_method_name => 'Mark completed',
@@ -1452,7 +1458,7 @@ sub tool_step1 {
 
         my $additional_field =
             Koha::AdditionalFields->search(
-                { name => $self->{config}->{library_libraryidfield}, tablename => 'branches' } )->next;
+            { name => $self->{config}->{library_libraryidfield}, tablename => 'branches' } )->next;
 
         my $library = Koha::Libraries->filter_by_additional_fields(
             [
@@ -1470,6 +1476,34 @@ sub tool_step1 {
 
     $template->param( 'libraries' => $libraries );
     $self->output_html( $template->output() );
+}
+
+sub availability {
+    my ( $self, $params ) = @_;
+
+    my $response = { method => "confirm", stage => "availability" };
+
+    my $request = $params->{request};
+
+    my $incdocs =
+        Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend( { logger => Koha::ILL::Request::Logger->new } );
+
+    my $metadata = {
+        branchcode => $params->{request}->branchcode,
+        ( $params->{request}->extended_attributes->find( { type => 'doi' } ) )
+        ? ( doi => $params->{request}->extended_attributes->find( { type => 'doi' } )->value )
+        : (),
+        ( $params->{request}->extended_attributes->find( { type => 'pubmedid' } ) )
+        ? ( pubmedid => $params->{request}->extended_attributes->find( { type => 'pubmedid' } )->value )
+        : (),
+    };
+
+    $metadata = Koha::ILL::Request::Workflow->new->prep_metadata($metadata);
+
+    my $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata } );
+
+    $response->{backend_availability} = $result;
+    return $response;
 }
 
 1;

@@ -104,6 +104,7 @@ sub Backend_Availability {
         return $c->render(
             status  => 200,
             openapi => {
+                response => $response,
                 success => "At library: " . $response->{data}->{illLibraryName},
             }
         );
