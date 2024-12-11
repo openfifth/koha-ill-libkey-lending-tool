@@ -970,24 +970,6 @@ sub status_graph {
             next_actions   => [],
             ui_method_icon => 'fa-edit',
         },
-        CIT => {
-            prev_actions   => ['REQ'],
-            id             => 'CIT',
-            name           => 'Citation Verification',
-            ui_method_name => 0,
-            method         => 0,
-            next_actions   => [ 'COMP', 'MIG', 'KILL' ],
-            ui_method_icon => 0,
-        },
-        SOURCE => {
-            prev_actions   => ['REQ'],
-            id             => 'SOURCE',
-            name           => 'Sourcing',
-            ui_method_name => 0,
-            method         => 0,
-            next_actions   => [ 'COMP', 'MIG', 'KILL' ],
-            ui_method_icon => 0,
-        },
         ERROR => {
             prev_actions   => [],
             id             => 'ERROR',
@@ -998,7 +980,7 @@ sub status_graph {
             ui_method_icon => 0,
         },
         COMP => {
-            prev_actions   => [ 'CIT', 'SOURCE', 'ERROR' ],
+            prev_actions   => [ 'ERROR' ],
             id             => 'COMP',
             name           => 'Order Complete',
             ui_method_name => 'Mark completed',
