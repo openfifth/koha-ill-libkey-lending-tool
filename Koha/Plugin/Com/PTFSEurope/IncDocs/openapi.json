@@ -47,5 +47,56 @@
                 }
             }
         }
+    },
+    "/create_fulfillment_request": {
+        "post": {
+            "x-mojo-to": "Com::PTFSEurope::IncDocs::Api#Create_Fulfillment_Request",
+            "operationId": "IncDocsCreateFulfillmentRequest",
+            "tags": ["ill","create_fulfillment_request"],
+            "parameters": [
+                {
+                    "name": "body",
+                    "in": "body",
+                    "description": "The request payload containing data",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "articleId": {
+                                "type": "integer",
+                                "description": "The articleId",
+                                "additionalProperties": false
+                            },
+                            "requesterLibraryId": {
+                                "type": "integer",
+                                "description": "The requesterLibraryId",
+                                "additionalProperties": false
+                            },
+                            "lenderLibraryId": {
+                                "type": "integer",
+                                "description": "The lenderLibraryId",
+                                "additionalProperties": false
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": [ "articleId", "requesterLibraryId", "lenderLibraryId" ]
+                    }
+                }
+            ],
+            "produces": [
+                "application/json"
+            ],
+            "responses": {
+                "200": {
+                    "description": "True or false"
+                },
+                "400": {
+                    "description": "Missing required data"
+                },
+                "404": {
+                    "description": "Not found"
+                }
+            }
+        }
     }
 }

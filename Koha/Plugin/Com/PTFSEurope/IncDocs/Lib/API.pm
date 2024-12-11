@@ -79,9 +79,9 @@ sub Libraries {
 }
 
 
-=head3 Libraries
+=head3 Backend_Availability
 
-Make a call to /libraries
+Make a call to /ill_backend_availability_incdocs
 
 =cut
 
@@ -92,6 +92,26 @@ sub Backend_Availability {
         'GET',
         $self->{baseurl} . "/ill_backend_availability_incdocs?metadata=" . $params->{metadata}
     );
+
+    return decode_json( $self->{ua}->request($request)->decoded_content );
+}
+
+
+=head3 Create_Fulfillment_Request
+
+Make a call to /create_fulfillment_request
+
+=cut
+
+sub Create_Fulfillment_Request {
+    my ( $self, $params ) = @_;
+
+    my $request = HTTP::Request->new(
+        'POST',
+        $self->{baseurl} . "/create_fulfillment_request"
+    );
+
+    $request->content(encode_json($params));
 
     return decode_json( $self->{ua}->request($request)->decoded_content );
 }

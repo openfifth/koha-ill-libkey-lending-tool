@@ -770,31 +770,36 @@ sub create_request {
 
     my $metadata = {};
 
-    $metadata = $self->prep_submission_metadata(
-        $submission->illrequestattributes,
-        $metadata
+    my $incdocs     = Koha::Plugin::Com::PTFSEurope::IncDocs->new;
+    my $incdocs_api = $incdocs->new_ill_backend( { logger => Koha::ILL::Request::Logger->new } )->{_api};
+    my $config      = eval { decode_json( $incdocs->retrieve_data("incdocs_config") // {} ) };
+
+    my $additional_field =
+        Koha::AdditionalFields->search( { name => $config->{library_libraryidfield}, tablename => 'branches' } )->next;
+    my $library    = Koha::Libraries->find( $submission->{request}->branchcode );
+    my $incdocs_id = $library->additional_field_values->search(
+        { 'record_id' => $library->id, 'field_id' => $additional_field->id } )->next;
+
+    my $requesterLibraryId = $incdocs_id->value;
+
+    # # Make the request with IncDocs Lending Tool via the koha-plugin-IncDocs API
+    my $result = $incdocs_api->Create_Fulfillment_Request(
+        {
+            articleId          => $submission->{other}->{articleId},
+            lenderLibraryId    => $submission->{other}->{lenderLibraryId},
+            requesterLibraryId => $requesterLibraryId
+        }
     );
 
-    # We may need to remove fields prior to sending the request
-    my $fields = fieldmap();
-    foreach my $field ( keys %{$fields} ) {
-        if ( $fields->{$field}->{no_submit} ) {
-            delete $metadata->{$field};
-        }
-    }
-
-    my $backend_api = Koha::Plugin::Com::PTFSEurope::IncDocs->new_ill_backend;
-
-    # Make the request with IncDocs Lending Tool via the koha-plugin-IncDocs API
-    my $response =
-        $backend_api->{_api}->Order_PlaceOrder2( $metadata, $submission->borrowernumber, $submission->illrequest_id );
-
-    $submission->status('ERROR')->store;
-
-    # Return the message
+    # # Return the message
     return {
-        success => 0,
-        message => ''
+        error   => 0,
+        status  => '',
+        message => '',
+        method  => 'confirm',
+        stage   => 'commit',
+        next    => 'illview',
+        value   => {}
     };
 }
 
@@ -812,6 +817,8 @@ sub confirm {
     my $stage = $params->{other}->{stage};
     if ( !$stage || 'availability' eq $stage ) {
         return $self->availability($params);
+    } elsif ( 'commit' eq $stage ) {
+        return $self->create_request($params);
     }
 
     my $return = $self->create_request( $params->{request} );
@@ -1503,6 +1510,9 @@ sub availability {
     my $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata } );
 
     $response->{backend_availability} = $result;
+    $response->{future}               = "commit";
+    $response->{illrequest_id}        = $request->illrequest_id;
+
     return $response;
 }
 

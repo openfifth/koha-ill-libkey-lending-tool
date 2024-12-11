@@ -12,7 +12,7 @@
                 <h3 class="text-success">This item is available</h3>
                 <h3 class="text-success">[% whole.backend_availability.success %]</h2>
                 <li>
-                    <button class="btn btn-primary">Place request with IncDocs</button>
+                    <a class="btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?op=[% whole.method %]&amp;illrequest_id=14&amp;stage=[% whole.future %]&amp;articleId=[% incdocsRsp.id %]&amp;lenderLibraryId=[% incdocsRsp.illLibraryId %]">Place request with IncDocs</a>
                 </li>
             [% END %]
                 <li>
