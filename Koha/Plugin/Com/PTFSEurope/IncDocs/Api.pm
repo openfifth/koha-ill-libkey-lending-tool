@@ -112,6 +112,7 @@ sub Backend_Availability {
         return $c->render(
             status  => 404,
             openapi => {
+                response  => $response,
                 error => "Not found at any library",
             }
         );
