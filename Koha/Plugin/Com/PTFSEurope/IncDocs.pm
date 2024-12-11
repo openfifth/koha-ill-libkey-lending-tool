@@ -31,6 +31,7 @@ use JSON qw( encode_json decode_json to_json );
 use C4::Installer;
 
 use Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API;
+use Koha::AdditionalFields;
 use Koha::Libraries;
 use Koha::Patrons;
 
@@ -1542,11 +1543,11 @@ sub tool_step1 {
     my $libraries = $response->{data};
 
     # iterate on libraries
-    foreach my $library (@$libraries) {
+    foreach my $incdocs_library (@$libraries) {
         my $patron = Koha::Patrons->search(
             [
                 {
-                    'extended_attributes.attribute' => { '=' => $library->{id} },
+                    'extended_attributes.attribute' => { '=' => $incdocs_library->{id} },
                     'extended_attributes.code'      => $self->{config}->{patron_libraryidfield}
                 },
             ],
@@ -1554,7 +1555,24 @@ sub tool_step1 {
         )->last;
 
         if ($patron) {
-            $library->{patron} = $patron;
+            $incdocs_library->{patron} = $patron;
+        }
+
+        my $additional_field =
+            Koha::AdditionalFields->search(
+                { name => $self->{config}->{library_libraryidfield}, tablename => 'branches' } )->next;
+
+        my $library = Koha::Libraries->filter_by_additional_fields(
+            [
+                {
+                    id    => $additional_field->id,
+                    value => $incdocs_library->{id},
+                },
+            ]
+        )->next;
+
+        if ($library) {
+            $incdocs_library->{library} = $library;
         }
     }
 

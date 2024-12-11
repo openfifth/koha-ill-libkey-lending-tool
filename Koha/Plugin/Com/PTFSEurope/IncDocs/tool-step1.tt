@@ -60,11 +60,15 @@
                 <td>[% library.id %]</td>
                 <td>[% library.name %]</td>
                 [% IF library.patron %]
-                  <td>[%- INCLUDE 'patron-title.inc' patron => library.patron hide_patron_infos_if_needed => 1 -%]</td>
+                  <td><strong>[%- INCLUDE 'patron-title.inc' patron => library.patron hide_patron_infos_if_needed => 1 -%]</strong></td>
                 [% ELSE %]
-                  <td>Not mapped</td>
+                  <td>N/A</td>
                 [% END %]
-                <td>N/A</td>
+                [% IF library.library %]
+                  <td><strong><a href="/cgi-bin/koha/admin/branches.pl?op=view&amp;branchcode=[% library.library.branchcode %]">[% library.library.branchname %]</a></strong></td>
+                [% ELSE %]
+                  <td>N/A</td>
+                [% END %]
             </tr>
         [% END %]
     </tbody>
