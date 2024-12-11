@@ -988,15 +988,6 @@ sub status_graph {
             next_actions   => [],
             ui_method_icon => 'fa-check',
         },
-        NEW => {
-            prev_actions   => [],
-            id             => 'NEW',
-            name           => 'New request',
-            ui_method_name => 'New request',
-            method         => 'create',
-            next_actions   => [ 'KILL', 'MIG', 'EDITITEM' ],
-            ui_method_icon => 'fa-plus'
-        },
 
         # Override REQ so we can rename the button
         # Talk about a sledgehammer to crack a nut
