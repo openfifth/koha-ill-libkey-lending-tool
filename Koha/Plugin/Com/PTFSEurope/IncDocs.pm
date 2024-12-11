@@ -1021,7 +1021,7 @@ sub status_graph {
             name           => 'Request error',
             ui_method_name => 0,
             method         => 0,
-            next_actions   => [ 'COMP', 'EDITITEM', 'STANDBY', 'READY', 'MIG', 'KILL' ],
+            next_actions   => [ 'COMP', 'EDITITEM', 'READY', 'MIG', 'KILL' ],
             ui_method_icon => 0,
         },
         COMP => {
@@ -1034,21 +1034,12 @@ sub status_graph {
             ui_method_icon => 'fa-check',
         },
         READY => {
-            prev_actions   => [ 'ERROR', 'STANDBY' ],
+            prev_actions   => [ 'ERROR' ],
             id             => 'READY',
             name           => 'Request ready',
             ui_method_name => 'Mark request READY',
             method         => 'ready',
             next_actions   => [],
-            ui_method_icon => 'fa-check',
-        },
-        STANDBY => {
-            prev_actions   => [ 'NEW', 'ERROR' ],
-            id             => 'STANDBY',
-            name           => 'Request standing by',
-            ui_method_name => 0,
-            method         => 0,
-            next_actions   => ['READY'],
             ui_method_icon => 'fa-check',
         },
         NEW => {
