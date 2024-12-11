@@ -500,33 +500,6 @@ sub mark_completed {
     };
 }
 
-=head3 ready
-
-Mark this request as 'READY'
-
-=cut
-
-sub ready {
-    my ( $self, $params ) = @_;
-    my $other = $params->{other};
-
-    my $request = Koha::ILL::Requests->find( $other->{illrequest_id} );
-
-    $request->status('READY');
-    $request->updated( DateTime->now );
-    $request->store;
-
-    return {
-        error   => 0,
-        status  => '',
-        message => '',
-        method  => 'ready',
-        stage   => 'commit',
-        next    => 'illview',
-        value   => $params,
-    };
-}
-
 =head3 migrate
 
 Migrate a request into or out of this backend
@@ -1021,7 +994,7 @@ sub status_graph {
             name           => 'Request error',
             ui_method_name => 0,
             method         => 0,
-            next_actions   => [ 'COMP', 'EDITITEM', 'READY', 'MIG', 'KILL' ],
+            next_actions   => [ 'COMP', 'EDITITEM', 'MIG', 'KILL' ],
             ui_method_icon => 0,
         },
         COMP => {
@@ -1030,15 +1003,6 @@ sub status_graph {
             name           => 'Order Complete',
             ui_method_name => 'Mark completed',
             method         => 'mark_completed',
-            next_actions   => [],
-            ui_method_icon => 'fa-check',
-        },
-        READY => {
-            prev_actions   => [ 'ERROR' ],
-            id             => 'READY',
-            name           => 'Request ready',
-            ui_method_name => 'Mark request READY',
-            method         => 'ready',
             next_actions   => [],
             ui_method_icon => 'fa-check',
         },
@@ -1055,7 +1019,7 @@ sub status_graph {
         # Override REQ so we can rename the button
         # Talk about a sledgehammer to crack a nut
         REQ => {
-            prev_actions   => [ 'READY', 'REQREV', 'QUEUED' ],
+            prev_actions   => [ 'REQREV', 'QUEUED' ],
             id             => 'REQ',
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs Lending Tool',
