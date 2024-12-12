@@ -51,13 +51,7 @@ sub Libraries {
 sub Backend_Availability {
     my $c = shift->openapi->valid_input or return;
 
-    my $metadata = $c->validation->param('metadata') || '';
-    $metadata = decode_json( decode_base64( uri_unescape($metadata) ) );
-
-    my $library = Koha::Libraries->find( $metadata->{branchcode} );
-
     my $config = _get_plugin_config();
-
     unless ( $config->{library_libraryidfield} ) {
         return $c->render(
             status  => 400,
@@ -67,6 +61,18 @@ sub Backend_Availability {
         );
     }
 
+    my $metadata = $c->validation->param('metadata') || '';
+    $metadata = decode_json( decode_base64( uri_unescape($metadata) ) );
+    unless ( $metadata->{doi} || $metadata->{pubmedid} ) {
+        return $c->render(
+            status  => 400,
+            openapi => {
+                error => 'No doi or pubmedid provided',
+            }
+        );
+    }
+
+    my $library = Koha::Libraries->find( $metadata->{branchcode} );
     my $additional_field =
         Koha::AdditionalFields->search( { name => $config->{library_libraryidfield}, tablename => 'branches' } )->next;
     my $incdocs_id = $library->additional_field_values->search(
@@ -81,15 +87,6 @@ sub Backend_Availability {
         );
     }
 
-    unless ( $metadata->{doi} || $metadata->{pubmedid} ) {
-        return $c->render(
-            status  => 400,
-            openapi => {
-                error => 'No doi or pubmedid provided',
-            }
-        );
-    }
-
     my $id_code  = $metadata->{doi} ? 'doi'            : 'pmid';
     my $id_value = $metadata->{doi} ? $metadata->{doi} : $metadata->{pubmedid};
     my $response =
@@ -97,7 +94,7 @@ sub Backend_Availability {
 
     # TODO:
     # Need to better ascertain availability here.
-    # Is an article available if openAccess = 1 regardless of illLibraryName?
+    # i.e.Is an article available if openAccess = 1 regardless of illLibraryName?
 
     if ( $response && $response->{data}->{illLibraryName} ) {
         return $c->render(
