@@ -1041,7 +1041,7 @@ sub status_graph {
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs',
             method         => 'confirm',
-            next_actions   => [ 'REQREV', 'COMP', 'CHK' ],
+            next_actions   => [],
             ui_method_icon => 'fa-check',
         },
         MIG => {
