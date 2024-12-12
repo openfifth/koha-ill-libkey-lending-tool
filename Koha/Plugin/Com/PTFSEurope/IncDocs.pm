@@ -168,7 +168,7 @@ Required method utilized by I<Koha::ILL::Request> load_backend
 sub new_ill_backend {
     my ( $self, $params ) = @_;
 
-    my $api = Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API->new($VERSION);
+    my $api        = Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API->new($VERSION);
     my $log_tt_dir = dirname(__FILE__) . '/' . name() . '/intra-includes/log/';
 
     $self->{_api}      = $api;
@@ -791,8 +791,11 @@ sub create_request {
     my $result = $incdocs_api->Create_Fulfillment_Request(
         {
             articleId          => $submission->{other}->{articleId},
+            customReference    => $config->{payload_customreference} || '',
             lenderLibraryId    => $submission->{other}->{lenderLibraryId},
-            requesterLibraryId => $requesterLibraryId
+            requesterEmail     => 'pedro.amorim@ptfs-europe.com',
+            requesterLibraryId => $requesterLibraryId,
+            type               => 'fulfillment-requests'
         }
     );
 

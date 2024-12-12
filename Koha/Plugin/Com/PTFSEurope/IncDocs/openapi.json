@@ -67,19 +67,34 @@
                                 "description": "The articleId",
                                 "additionalProperties": false
                             },
-                            "requesterLibraryId": {
-                                "type": "integer",
-                                "description": "The requesterLibraryId",
+                            "customReference": {
+                                "type": "string",
+                                "description": "The customReference",
                                 "additionalProperties": false
                             },
                             "lenderLibraryId": {
                                 "type": "integer",
                                 "description": "The lenderLibraryId",
                                 "additionalProperties": false
+                            },
+                            "requesterEmail": {
+                                "type": "string",
+                                "description": "The requesterEmail",
+                                "additionalProperties": false
+                            },
+                            "requesterLibraryId": {
+                                "type": "integer",
+                                "description": "The requesterLibraryId",
+                                "additionalProperties": false
+                            },
+                            "type": {
+                                "type": "string",
+                                "description": "The type",
+                                "additionalProperties": false
                             }
                         },
                         "additionalProperties": false,
-                        "required": [ "articleId", "requesterLibraryId", "lenderLibraryId" ]
+                        "required": [ "articleId", "lenderLibraryId", "requesterLibraryId", "requesterEmail", "type" ]
                     }
                 }
             ],
