@@ -104,15 +104,15 @@ sub Backend_Availability {
             status  => 200,
             openapi => {
                 response => $response,
-                success => "At library: " . $response->{data}->{illLibraryName},
+                success  => "At library: " . $response->{data}->{illLibraryName},
             }
         );
     } elsif ( $response && !$response->{data}->{illLibraryName} ) {
         return $c->render(
             status  => 404,
             openapi => {
-                response  => $response,
-                error => "Not found at any library",
+                response => $response,
+                error    => "Not found at any library",
             }
         );
     } else {
@@ -129,14 +129,11 @@ sub Create_Fulfillment_Request {
     my $c = shift->openapi->valid_input or return;
 
     my $data = $c->validation->param('body') || '';
-
     $data->{customReference} = "PTFS-Europe TEST - DO NOT FULFILL";
-    $data->{requesterEmail} = 'pedro.amorim@ptfs-europe.com';
-    $data->{type} = "fulfillment-requests";
+    $data->{requesterEmail}  = 'pedro.amorim@ptfs-europe.com';
+    $data->{type}            = "fulfillment-requests";
 
-
-    my $response =
-        _make_request( 'POST', 'fulfillmentRequests', {data => $data} );
+    my $response = _make_request( 'POST', 'fulfillmentRequests', { data => $data } );
 
     if ( $response->{data} ) {
         return $c->render(
@@ -173,8 +170,8 @@ sub _make_request {
     my $uri =
         URI->new( $incdocs_api_url . '/' . $library_group . '/' . $endpoint_url . '?access_token=' . $access_token );
 
-    my $request  = HTTP::Request->new( $method, $uri, undef, undef );
-    if($payload){
+    my $request = HTTP::Request->new( $method, $uri, undef, undef );
+    if ($payload) {
         $request->header( 'Content-Type' => 'application/json; charset=UTF-8' );
         $request->content( encode_json($payload) );
     }
