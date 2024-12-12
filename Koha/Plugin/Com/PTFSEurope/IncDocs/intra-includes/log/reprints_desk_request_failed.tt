@@ -1,5 +1,0 @@
-[% USE KohaDates %]
-[% PROCESS 'ill-request-log.inc' %]
-[% WRAPPER ill_request_log action_label = 'IncDocs request failed ' %]
-received response &quot;[% log.info.response.replace('\n', ', ') | html %]&quot;
-[% END %]

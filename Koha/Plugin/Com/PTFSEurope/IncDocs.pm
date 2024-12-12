@@ -169,8 +169,12 @@ sub new_ill_backend {
     my ( $self, $params ) = @_;
 
     my $api = Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API->new($VERSION);
+    my $log_tt_dir = dirname(__FILE__) . '/' . name() . '/intra-includes/log/';
 
-    $self->{_api}    = $api;
+    $self->{_api}      = $api;
+    $self->{templates} = {
+        'INCDOCS_MIGRATE_IN' => $log_tt_dir . 'incdocs_migrate_in.tt',
+    };
     $self->{_logger} = $params->{logger} if ( $params->{logger} );
 
     return $self;
@@ -537,18 +541,18 @@ sub migrate {
     # For each attribute, if the property name is a core one we change it to the IncDocs Lending Tool
     # equivalent, otherwise we can skip it as it already exists in the attributes list
     foreach my $attr ( @{$all_attrs} ) {
-        my $rd_field_name = $self->find_reprints_desk_property( $attr->{type} );
+        my $incdocs_field_name = $self->find_incdocs_property( $attr->{type} );
 
         # If we've found a IncDocs Lending Tool field name and an attribute doesn't already exist
         # with this name, create a new one
-        if ( $rd_field_name && !$self->find_illrequestattribute( $all_attrs, $rd_field_name ) ) {
+        if ( $incdocs_field_name && !$self->find_illrequestattribute( $all_attrs, $incdocs_field_name ) ) {
             Koha::ILL::Request::Attribute->new(
                 {
                     illrequest_id => $request->illrequest_id,
 
                     # Check required for compatibility with installations before bug 33970
                     column_exists( 'illrequestattributes', 'backend' ) ? ( backend => "IncDocs" ) : (),
-                    type  => $rd_field_name,
+                    type  => $incdocs_field_name,
                     value => $attr->{value},
                 }
             )->store;
@@ -559,7 +563,7 @@ sub migrate {
     if ( $self->_logger ) {
         my $payload = {
             modulename   => 'ILL',
-            actionname   => 'REPRINTS_DESK_MIGRATE_IN',
+            actionname   => 'INCDOCS_MIGRATE_IN',
             objectnumber => $request->id,
             infos        => to_json(
                 {
@@ -1043,7 +1047,7 @@ sub status_graph {
             name           => 'Switched provider',
             ui_method_name => 'Switch provider',
             method         => 'migrate',
-            next_actions   => [ 'GENREQ', 'KILL', 'MIG' ],
+            next_actions   => [ 'REQ', 'GENREQ', 'KILL', 'MIG' ],
             ui_method_icon => 'fa-search',
         },
     };
@@ -1074,14 +1078,14 @@ sub find_illrequestattribute {
     }
 }
 
-=head3 find_reprints_desk_property
+=head3 find_incdocs_property
 
 Given a core property name, find the equivalent IncDocs Lending Tool
 name. Or undef if there is not one
 
 =cut
 
-sub find_reprints_desk_property {
+sub find_incdocs_property {
     my ( $self, $core ) = @_;
     my $fields = $self->fieldmap;
     foreach my $field ( keys %{$fields} ) {
