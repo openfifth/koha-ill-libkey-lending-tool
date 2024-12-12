@@ -32,6 +32,7 @@ use C4::Installer;
 
 use Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API;
 use Koha::AdditionalFields;
+use Koha::ILL::Requests;
 use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
@@ -173,7 +174,8 @@ sub new_ill_backend {
 
     $self->{_api}      = $api;
     $self->{templates} = {
-        'INCDOCS_MIGRATE_IN' => $log_tt_dir . 'incdocs_migrate_in.tt',
+        'INCDOCS_MIGRATE_IN'   => $log_tt_dir . 'incdocs_migrate_in.tt',
+        'INCDOCS_STATUS_CHECK' => dirname(__FILE__) . '/intra-includes/log/incdocs_status_check.tt'
     };
     $self->{_logger} = $params->{logger} if ( $params->{logger} );
 
@@ -1023,6 +1025,15 @@ sub status_graph {
             next_actions   => [ 'COMP', 'EDITITEM', 'MIG', 'KILL' ],
             ui_method_icon => 0,
         },
+        STAT => {
+            prev_actions   => ['REQ'],
+            id             => 'STAT',
+            name           => 'IncDocs Status',
+            ui_method_name => 'Check IncDocs status',
+            method         => 'status',
+            next_actions   => [],
+            ui_method_icon => 'fa-search',
+        },
         COMP => {
             prev_actions   => ['ERROR'],
             id             => 'COMP',
@@ -1041,11 +1052,11 @@ sub status_graph {
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs',
             method         => 'confirm',
-            next_actions   => [],
+            next_actions   => ['STAT'],
             ui_method_icon => 'fa-check',
         },
         MIG => {
-            prev_actions   => [ 'NEW', 'REQ', 'GENREQ', 'REQREV', 'QUEUED' ],
+            prev_actions   => [ 'NEW', 'GENREQ', 'REQREV', 'QUEUED' ],
             id             => 'MIG',
             name           => 'Switched provider',
             ui_method_name => 'Switch provider',
@@ -1615,6 +1626,82 @@ sub availability {
     $response->{illrequest_id}        = $request->illrequest_id;
 
     return $response;
+}
+
+=head3 status
+
+    my $response = $IncDocs->status( $record, $status, $params );
+
+Return an ILL standard response for the status method call.
+
+=cut
+
+sub status {
+    my ( $self, $params ) = @_;
+
+    my $stage = $params->{other}->{stage};
+
+    if ( !$stage || $stage eq 'init' ) {
+
+        my $request = Koha::ILL::Requests->find( $params->{other}->{illrequest_id} );
+
+        if ( !$request->orderid ) {
+            return {
+                status  => "",
+                message => "This request does not have an IncDocs request ID",    #this is not showing. why?
+                error   => 0,
+                value   => {},
+                method  => "status",
+                next    => "illview",
+                stage   => "show_status",
+            };
+        }
+
+        my $incdocs =
+            Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend(
+            { logger => Koha::ILL::Request::Logger->new } );
+        my $result = $incdocs->{_api}->Fulfillment_Request_Status( $request->orderid );
+        $result->{illrequest_id} = $request->illrequest_id;
+
+        my $status = {
+            status  => 200,
+            message => '',
+            error   => '',
+            value   => $result,
+        };
+        $status->{method} = "status";
+        $status->{stage}  = "show_status";
+
+        # Log this check if appropriate
+        if ( $self->_logger ) {
+            my $logger = $self->_logger;
+            $logger->log_something(
+                {
+                    actionname   => 'INCDOCS_STATUS_CHECK',
+                    objectnumber => $params->{request}->id,
+                    infos        => to_json(
+                        {
+                            log_origin => $self->name,
+                            response   => $status->{value}
+                        }
+                    )
+                }
+            );
+        }
+        return $status;
+    } else {
+
+        # Assume stage is commit, we just return.
+        return {
+            status  => "",
+            message => "",
+            error   => 0,
+            value   => {},
+            method  => "status",
+            next    => "illview",
+            stage   => "commit",
+        };
+    }
 }
 
 1;

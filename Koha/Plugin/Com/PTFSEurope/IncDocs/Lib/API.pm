@@ -116,4 +116,21 @@ sub Create_Fulfillment_Request {
     return decode_json( $self->{ua}->request($request)->decoded_content );
 }
 
+=head3 Create_Fulfillment_Request
+
+Make a call to /create_fulfillment_request
+
+=cut
+
+sub Fulfillment_Request_Status {
+    my ( $self, $params ) = @_;
+
+    my $request = HTTP::Request->new(
+        'GET',
+        $self->{baseurl} . "/fulfillment_request_status?fulfillment_request_id=" . $params
+    );
+
+    return decode_json( $self->{ua}->request($request)->decoded_content );
+}
+
 1;

@@ -113,5 +113,35 @@
                 }
             }
         }
+    },
+    "/fulfillment_request_status": {
+        "get": {
+            "x-mojo-to": "Com::PTFSEurope::IncDocs::Api#Fulfillment_Request_Status",
+            "operationId": "IncDocsFulfillmentRequestStatus",
+            "tags": ["ill","fulfillment_request_status"],
+            "parameters": [
+                {
+                    "name": "fulfillment_request_id",
+                    "in": "query",
+                    "description": "The incdocs fulfillment_request_id",
+                    "type": "string",
+                    "required": true
+                }
+            ],
+            "produces": [
+                "application/json"
+            ],
+            "responses": {
+                "200": {
+                    "description": "True or false"
+                },
+                "400": {
+                    "description": "Missing required data"
+                },
+                "404": {
+                    "description": "Not found"
+                }
+            }
+        }
     }
 }

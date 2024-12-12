@@ -144,6 +144,28 @@ sub Create_Fulfillment_Request {
     }
 }
 
+sub Fulfillment_Request_Status {
+    my $c = shift->openapi->valid_input or return;
+
+    my $fulfillment_request_id = $c->validation->param('fulfillment_request_id') || '';
+
+    my $response = _make_request( 'GET', 'fulfillmentRequests/' . $fulfillment_request_id );
+
+    if ( $response->{data} ) {
+        return $c->render(
+            status  => 200,
+            openapi => $response->{data}
+        );
+    } else {
+        return $c->render(
+            status  => 400,
+            openapi => {
+                error => $response->{data},
+            }
+        );
+    }
+}
+
 =head3 _make_request
 
 Make a request to the LibKey Lending Tool API. If the request is not for /auth/login, it will automatically call
