@@ -56,8 +56,7 @@ sub Backend_Availability {
 
     my $library = Koha::Libraries->find( $metadata->{branchcode} );
 
-    my $plugin = Koha::Plugin::Com::PTFSEurope::IncDocs->new();
-    my $config = eval { decode_json( $plugin->retrieve_data("incdocs_config") // {} ) };
+    my $config = _get_plugin_config();
 
     unless ( $config->{library_libraryidfield} ) {
         return $c->render(
@@ -164,9 +163,7 @@ Authenticate before making the request.
 sub _make_request {
     my ( $method, $endpoint_url, $payload ) = @_;
 
-    my $plugin = Koha::Plugin::Com::PTFSEurope::IncDocs->new();
-    my $config = eval { decode_json( $plugin->retrieve_data("incdocs_config") // {} ) };
-
+    my $config = _get_plugin_config();
     return undef unless $config;
 
     my $incdocs_api_url = 'https://lendingtool-api.thirdiron.com/public/v1/libraryGroups';
@@ -185,6 +182,13 @@ sub _make_request {
     my $response = $ua->request($request);
 
     return decode_json( $response->decoded_content );
+}
+
+sub _get_plugin_config {
+    my $plugin = Koha::Plugin::Com::PTFSEurope::IncDocs->new();
+    my $config = $plugin->retrieve_data("incdocs_config");
+    return decode_json($config) if $config;
+    return {};
 }
 
 1;
