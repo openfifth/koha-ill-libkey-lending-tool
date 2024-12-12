@@ -16,7 +16,7 @@
                 </li>
             [% END %]
                 <li>
-                    <a href="/cgi-bin/koha/ill/ill-requests.pl?op=illview&amp;illrequest_id=14">Return to request</a>
+                    <a href="/cgi-bin/koha/ill/ill-requests.pl?op=illview&amp;illrequest_id=[% whole.illrequest_id %]">Return to request</a>
                 </li>
             [% IF incdocsRsp %]
                 <h3>IncDocs response details:</h2>
