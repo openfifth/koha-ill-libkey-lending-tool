@@ -769,6 +769,7 @@ sub create_request {
     my ( $self, $submission ) = @_;
 
     my $metadata = {};
+    my $request  = $submission->{request};
 
     my $incdocs     = Koha::Plugin::Com::PTFSEurope::IncDocs->new;
     my $incdocs_api = $incdocs->new_ill_backend( { logger => Koha::ILL::Request::Logger->new } )->{_api};
@@ -776,7 +777,7 @@ sub create_request {
 
     my $additional_field =
         Koha::AdditionalFields->search( { name => $config->{library_libraryidfield}, tablename => 'branches' } )->next;
-    my $library    = Koha::Libraries->find( $submission->{request}->branchcode );
+    my $library    = Koha::Libraries->find( $request->branchcode );
     my $incdocs_id = $library->additional_field_values->search(
         { 'record_id' => $library->id, 'field_id' => $additional_field->id } )->next;
 
@@ -791,7 +792,30 @@ sub create_request {
         }
     );
 
-    # # Return the message
+    if ( $result->{error} ) {
+        $request->append_to_note( $result->{error} );
+        $request->status('ERROR')->store;
+        return {
+            error   => 0,
+            status  => '',
+            message => '',
+            method  => 'confirm',
+            stage   => 'commit',
+            next    => 'illview',
+            value   => {}
+        };
+    }
+
+    $result->{incdocs_type} = delete $result->{type};
+    $result->{type}         = 'article';
+    $result->{incdocs_id}   = delete $result->{id};
+
+    $request->orderid( $result->{incdocs_id} );
+    $request->status('REQ');
+    $request->store;
+
+    $self->create_illrequestattributes( $request, $result );
+
     return {
         error   => 0,
         status  => '',
@@ -1075,7 +1099,7 @@ schema
 
 =cut
 
-sub _openurl_to_reprints_desk {
+sub _openurl_to_incdocs {
     my ($params) = @_;
 
     my $transform_metadata = {
@@ -1368,6 +1392,76 @@ sub fieldmap {
             no_submit => 1,
             position  => 99
         },
+        lenderLibraryId => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Lender library ID",
+            no_submit => 1,
+            position  => 99
+        },
+        incdocs_type => {
+            type      => "string",
+            exclude   => 1,
+            label     => "IncDocs type",
+            no_submit => 1,
+            position  => 99
+        },
+        customReference => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Custom reference",
+            no_submit => 1,
+            position  => 99
+        },
+        incdocs_id => {
+            type      => "string",
+            exclude   => 1,
+            label     => "IncDocs ID",
+            no_submit => 1,
+            position  => 99
+        },
+        requesterLibraryId => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Requester library ID",
+            no_submit => 1,
+            position  => 99
+        },
+        requesterEmail => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Requester email",
+            no_submit => 1,
+            position  => 99
+        },
+        articleId => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Article ID",
+            no_submit => 1,
+            position  => 99
+        },
+        created => {
+            type      => "string",
+            exclude   => 1,
+            label     => "IncDocs created",
+            no_submit => 1,
+            position  => 99
+        },
+        lastUpdated => {
+            type      => "string",
+            exclude   => 1,
+            label     => "IncDocs last updated",
+            no_submit => 1,
+            position  => 99
+        },
+        libraryGroupId => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Library groupd ID",
+            no_submit => 1,
+            position  => 99
+        }
     };
 }
 

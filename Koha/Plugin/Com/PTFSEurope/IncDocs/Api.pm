@@ -129,9 +129,7 @@ sub Backend_Availability {
 sub Create_Fulfillment_Request {
     my $c = shift->openapi->valid_input or return;
 
-
     my $data = $c->validation->param('body') || '';
-
 
     $data->{customReference} = "PTFS-Europe TEST - DO NOT FULFILL";
     $data->{requesterEmail} = 'pedro.amorim@ptfs-europe.com';
@@ -141,92 +139,19 @@ sub Create_Fulfillment_Request {
     my $response =
         _make_request( 'POST', 'fulfillmentRequests', {data => $data} );
 
+    if ( $response->{data} ) {
         return $c->render(
             status  => 200,
+            openapi => $response->{data}
+        );
+    } else {
+        return $c->render(
+            status  => 400,
             openapi => {
-                response => 'hi',
-                success  => "At library:",
+                error => $response->{data},
             }
         );
-
-
-    # "type": "fulfillment-requests",
-    # "articleId": 26302703,
-    # "requesterLibraryId": 1814,
-    # "requesterEmail": "pedro.amorim@ptfs-europe.com",
-    # "lenderLibraryId": 2727,
-    # "customReference": "PTFS-Europe TEST - DO NOT FULFILL"
-
-    # my $library = Koha::Libraries->find( $metadata->{branchcode} );
-
-    # my $plugin = Koha::Plugin::Com::PTFSEurope::IncDocs->new();
-    # my $config = eval { decode_json( $plugin->retrieve_data("incdocs_config") // {} ) };
-
-    # unless ( $config->{library_libraryidfield} ) {
-    #     return $c->render(
-    #         status  => 400,
-    #         openapi => {
-    #             error => 'Library id field not configured.',
-    #         }
-    #     );
-    # }
-
-    # my $additional_field =
-    #     Koha::AdditionalFields->search( { name => $config->{library_libraryidfield}, tablename => 'branches' } )->next;
-    # my $incdocs_id = $library->additional_field_values->search(
-    #     { 'record_id' => $library->id, 'field_id' => $additional_field->id } )->next;
-
-    # unless ($incdocs_id) {
-    #     return $c->render(
-    #         status  => 400,
-    #         openapi => {
-    #             error => 'Library ' . $library->branchname . ' does not have a value for ' . $additional_field->name,
-    #         }
-    #     );
-    # }
-
-    # unless ( $metadata->{doi} || $metadata->{pubmedid} ) {
-    #     return $c->render(
-    #         status  => 400,
-    #         openapi => {
-    #             error => 'No doi or pubmedid provided',
-    #         }
-    #     );
-    # }
-
-    # my $id_code  = $metadata->{doi} ? 'doi'            : 'pmid';
-    # my $id_value = $metadata->{doi} ? $metadata->{doi} : $metadata->{pubmedid};
-    # my $response =
-    #     _make_request( 'GET', 'libraries/' . $incdocs_id->value . '/articles/' . $id_code . '/' . $id_value );
-
-    # # TODO:
-    # # Need to better ascertain availability here.
-    # # Is an article available if openAccess = 1 regardless of illLibraryName?
-
-    # if ( $response && $response->{data}->{illLibraryName} ) {
-    #     return $c->render(
-    #         status  => 200,
-    #         openapi => {
-    #             response => $response,
-    #             success  => "At library: " . $response->{data}->{illLibraryName},
-    #         }
-    #     );
-    # } elsif ( $response && !$response->{data}->{illLibraryName} ) {
-    #     return $c->render(
-    #         status  => 404,
-    #         openapi => {
-    #             response => $response,
-    #             error    => "Not found at any library",
-    #         }
-    #     );
-    # } else {
-    #     return $c->render(
-    #         status  => 404,
-    #         openapi => {
-    #             error => 'Provided doi or pubmedid is not available in IncDocs',
-    #         }
-    #     );
-    # }
+    }
 }
 
 =head3 _make_request
@@ -251,19 +176,13 @@ sub _make_request {
     my $uri =
         URI->new( $incdocs_api_url . '/' . $library_group . '/' . $endpoint_url . '?access_token=' . $access_token );
 
-    # $payload->{access_token} = $access_token;
-    # $uri->query_form($payload);
-
     my $request  = HTTP::Request->new( $method, $uri, undef, undef );
-    $request->content( encode_json($payload) );
+    if($payload){
+        $request->header( 'Content-Type' => 'application/json; charset=UTF-8' );
+        $request->content( encode_json($payload) );
+    }
     my $ua       = LWP::UserAgent->new;
     my $response = $ua->request($request);
-
-
-use Data::Dumper; $Data::Dumper::Maxdepth = 2;
-warn Dumper('##### 1 #######################################################line: ' . __LINE__);
-warn Dumper($response);
-warn Dumper('##### end1 #######################################################');
 
     return decode_json( $response->decoded_content );
 }
