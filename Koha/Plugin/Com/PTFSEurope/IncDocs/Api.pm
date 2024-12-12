@@ -126,7 +126,10 @@ sub Create_Fulfillment_Request {
     my $c = shift->openapi->valid_input or return;
 
     my $data = $c->validation->param('body') || '';
-    $data->{customReference} = "PTFS-Europe TEST - DO NOT FULFILL";
+
+    my $config = _get_plugin_config();
+
+    $data->{customReference} = $config->{payload_customreference} || '';
     $data->{requesterEmail}  = 'pedro.amorim@ptfs-europe.com';
     $data->{type}            = "fulfillment-requests";
 
