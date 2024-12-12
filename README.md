@@ -6,7 +6,7 @@ This backend provides the ability to create Interlibrary Loan requests using the
 
 Only compatible with Koha 24.05+
 
-This backend requires [bug 38662](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=38662)
+This plugin requires [bug 38663](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=38663)
 
 ## Documentation
 
