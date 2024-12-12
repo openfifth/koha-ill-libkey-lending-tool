@@ -9,7 +9,7 @@
                   <a href="/cgi-bin/koha/ill/ill-requests.pl?op=illview&amp;illrequest_id=[% incdocsRsp.illrequest_id %]">Return to request</a>
               </li>
           [% IF incdocsRsp %]
-              <h3>IncDocs response details:</h2>
+              <h3>IncDocs status response details:</h2>
               [% FOREACH item IN incdocsRsp %]
                   <tr>
                   <td style="padding: 5px">[% item.key %]</td>
