@@ -1,11 +1,10 @@
-[% INCLUDE 'incdocs_header.inc' %]
+[% PROCESS 'incdocs_html_helpers.inc' %]
+
+[% PROCESS inc_docs_header incdocs_bc_items = [ { name => "Configuration", url => "#", active = 1 } ] %]
 
 <div class="main container-fluid">
     <div class="row">
-        <div class="col-sm-10 offset-sm-2">
-            <a class="btn btn-link" href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3APTFSEurope%3A%3AIncDocs&method=tool">
-                <i class="fa fa-list"></i> Click here to list IncDocs libraries
-            </a>
+        <div class="col-md-10 order-md-2 order-sm-1">
             <h1>IncDocs configuration</h1>
             <form id="IncDocs_configure" method="get">
                 <fieldset class="rows">
@@ -55,8 +54,6 @@
                     <input class="btn btn-primary" id="submit_button" type="submit" value="Save configuration" />
                 </fieldset>
             </form>
-        </div>
-        <div class="col-sm-10 offset-sm-2 page-section" id="IncDocs_upgrade">
             <h5>Upgrade status</h5>
             [% IF last_upgraded %]
             Plugin was last upgraded on this system on [% last_upgraded | $KohaDates with_hours => 1 %]
@@ -64,5 +61,7 @@
             Plugin has never been upgraded.
             [% END %]
         </div>
+
+[% PROCESS inc_docs_sidebar page = 'configuration' %]
 
 [% INCLUDE 'intranet-bottom.inc' %]
