@@ -1047,13 +1047,22 @@ sub status_graph {
         # Override REQ so we can rename the button
         # Talk about a sledgehammer to crack a nut
         REQ => {
-            prev_actions   => [ 'NEW', 'REQREV', 'QUEUED', 'CANCREQ' ],
+            prev_actions   => [ 'NEW', 'QUEUED', 'CANCREQ' ],
             id             => 'REQ',
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs',
             method         => 'confirm',
             next_actions   => ['STAT'],
             ui_method_icon => 'fa-check',
+        },
+        REQREV => {
+            prev_actions   => [ 'REQ', 'GENREQ' ],
+            id             => 'REQREV',
+            name           => 'Request declined',
+            ui_method_name => 'Revert request',
+            method         => 'cancel',
+            next_actions   => [ 'MIG', 'GENREQ', 'KILL' ],
+            ui_method_icon => 'fa-times',
         },
         MIG => {
             prev_actions   => [ 'NEW', 'GENREQ', 'REQREV', 'QUEUED' ],
@@ -1662,6 +1671,7 @@ sub status {
             { logger => Koha::ILL::Request::Logger->new } );
         my $result = $incdocs->{_api}->Fulfillment_Request_Status( $request->orderid );
         $result->{illrequest_id} = $request->illrequest_id;
+        $result->{request_status} = $request->status;
 
         my $status = {
             status  => 200,
@@ -1671,6 +1681,13 @@ sub status {
         };
         $status->{method} = "status";
         $status->{stage}  = "show_status";
+
+        if ( $result->{status} eq 'complete'){
+            $request->status('COMP');
+        }elsif ($result->{status} eq 'declined'){
+            $request->status('REQREV');
+            $request->append_to_note( 'IncDocs decline reason: ' . $result->{declinedReason} )
+        }
 
         # Log this check if appropriate
         if ( $self->_logger ) {
