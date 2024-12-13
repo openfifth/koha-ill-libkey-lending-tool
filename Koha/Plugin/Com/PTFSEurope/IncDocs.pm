@@ -78,14 +78,14 @@ sub new {
 
 sub configure {
     my ( $self, $args ) = @_;
-    my $cgi = $self->{'cgi'};
+    my $cgi      = $self->{'cgi'};
     my $template = $self->get_template( { file => 'intranet-tmpl/configure.tt' } );
     my $config   = $self->{config};
     $template->param(
         config => $self->{config},
         cwd    => dirname(__FILE__)
     );
-    if ( $cgi->param('save')) {
+    if ( $cgi->param('save') ) {
         my %blacklist = ( 'save' => 1, 'class' => 1, 'method' => 1 );
         my $hashed    = { map { $_ => ( scalar $cgi->param($_) )[0] } $cgi->param };
         my $p         = {};
@@ -99,7 +99,7 @@ sub configure {
         $self->store_data( { incdocs_config => scalar encode_json($p) } );
         $template->param(
             config => decode_json( $self->retrieve_data('incdocs_config') || '{}' ),
-            saved => 1,
+            saved  => 1,
         );
     }
     $self->output_html( $template->output() );
@@ -1584,9 +1584,7 @@ sub list_incdocs_libraries {
         }
     }
 
-    @$libraries = sort {
-        ($b->{library} // $b->{patron}) <=> ($a->{library} // $a->{patron})
-    } @$libraries;
+    @$libraries = sort { ( $b->{library} // $b->{patron} ) <=> ( $a->{library} // $a->{patron} ) } @$libraries;
 
     $template->param( 'libraries' => $libraries );
     $self->output_html( $template->output() );
