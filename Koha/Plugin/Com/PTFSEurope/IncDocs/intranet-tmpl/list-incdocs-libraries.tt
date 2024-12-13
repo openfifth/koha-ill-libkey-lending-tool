@@ -1,0 +1,47 @@
+
+
+[% INCLUDE 'incdocs_header.inc' %]
+
+<div class="main container-fluid">
+    <div class="row">
+        <div class="col-sm-10 offset-sm-2">
+            <div id="incdocs_plugin" class="page-section">
+                <a class="btn btn-link" href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3APTFSEurope%3A%3AIncDocs&amp;method=configure"><i class="fa fa-gear"></i> Click here to configure the plugin</a>
+                <h1>IncDocs libraries</h1>
+                [% IF error %]
+                  <h2 class="text-danger">[% error %] </h2>
+                [% ELSE %]
+                  <h2>Found [% libraries.size %] libraries</h2>
+                  <table>
+                      <thead>
+                          <tr>
+                              <th>IncDocs ID</th>
+                              <th>IncDocs Name</th>
+                              <th>Koha patron record</th>
+                              <th>Koha library record</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          [% FOREACH library IN libraries %]
+                              <tr>
+                                  <td>[% library.id %]</td>
+                                  <td>[% library.name %]</td>
+                                  [% IF library.patron %]
+                                    <td><strong>[%- INCLUDE 'patron-title.inc' patron => library.patron hide_patron_infos_if_needed => 1 -%]</strong></td>
+                                  [% ELSE %]
+                                    <td>N/A</td>
+                                  [% END %]
+                                  [% IF library.library %]
+                                    <td><strong><a href="/cgi-bin/koha/admin/branches.pl?op=view&amp;branchcode=[% library.library.branchcode %]">[% library.library.branchname %]</a></strong></td>
+                                  [% ELSE %]
+                                    <td>N/A</td>
+                                  [% END %]
+                              </tr>
+                          [% END %]
+                      </tbody>
+                  </table>
+                [% END %]
+          </div>
+        </div> <!-- /.col-md-10.order-md-2 -->
+
+[% INCLUDE 'intranet-bottom.inc' %]
