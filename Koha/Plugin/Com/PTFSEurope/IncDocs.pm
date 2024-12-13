@@ -81,7 +81,7 @@ sub configure {
     my $cgi = $self->{'cgi'};
 
     unless ( $cgi->param('save') ) {
-        my $template = $self->get_template( { file => 'configure.tt' } );
+        my $template = $self->get_template( { file => 'intranet-tmpl/configure.tt' } );
         my $config   = $self->{config};
 
         $template->param(
@@ -1547,14 +1547,24 @@ sub _logger {
 sub tool {
     my ( $self, $args ) = @_;
 
-    $self->tool_step1();
+    $self->list_incdocs_libraries();
 }
 
-sub tool_step1 {
+sub list_incdocs_libraries {
     my ( $self, $args ) = @_;
     my $cgi = $self->{'cgi'};
 
-    my $template = $self->get_template( { file => 'tool-step1.tt' } );
+    my $template = $self->get_template( { file => 'intranet-tmpl/list-incdocs-libraries.tt' } );
+
+    if (   !$self->{config}->{access_token}
+        || !$self->{config}->{library_group}
+        || !$self->{config}->{library_libraryidfield}
+        || !$self->{config}->{patron_libraryidfield} )
+    {
+        $template->param( 'error' => 'Configuration invalid or incomplete' );
+        $self->output_html( $template->output() );
+        return;
+    }
 
     my $incdocs =
         Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend( { logger => Koha::ILL::Request::Logger->new } );
@@ -1588,22 +1598,32 @@ sub tool_step1 {
             Koha::AdditionalFields->search(
             { name => $self->{config}->{library_libraryidfield}, tablename => 'branches' } )->next;
 
-        my $library = Koha::Libraries->filter_by_additional_fields(
-            [
-                {
-                    id    => $additional_field->id,
-                    value => $incdocs_library->{id},
-                },
-            ]
-        )->next;
-
-        if ($library) {
+        if ($additional_field) {
+            my $library = Koha::Libraries->filter_by_additional_fields(
+                [
+                    {
+                        id    => $additional_field->id,
+                        value => $incdocs_library->{id},
+                    },
+                ]
+            )->next;
             $incdocs_library->{library} = $library;
         }
     }
 
+    @$libraries = sort {
+        ($b->{library} // $b->{patron}) <=> ($a->{library} // $a->{patron})
+    } @$libraries;
+
     $template->param( 'libraries' => $libraries );
     $self->output_html( $template->output() );
+}
+
+sub template_include_paths {
+    my ($self) = @_;
+    return [
+        $self->mbf_path('intra-includes/plugin'),
+    ];
 }
 
 sub availability {
@@ -1670,7 +1690,7 @@ sub status {
             Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend(
             { logger => Koha::ILL::Request::Logger->new } );
         my $result = $incdocs->{_api}->Fulfillment_Request_Status( $request->orderid );
-        $result->{illrequest_id} = $request->illrequest_id;
+        $result->{illrequest_id}  = $request->illrequest_id;
         $result->{request_status} = $request->status;
 
         my $status = {
@@ -1682,11 +1702,11 @@ sub status {
         $status->{method} = "status";
         $status->{stage}  = "show_status";
 
-        if ( $result->{status} eq 'complete'){
+        if ( $result->{status} eq 'complete' ) {
             $request->status('COMP');
-        }elsif ($result->{status} eq 'declined'){
+        } elsif ( $result->{status} eq 'declined' ) {
             $request->status('REQREV');
-            $request->append_to_note( 'IncDocs decline reason: ' . $result->{declinedReason} )
+            $request->append_to_note( 'IncDocs decline reason: ' . $result->{declinedReason} );
         }
 
         # Log this check if appropriate
