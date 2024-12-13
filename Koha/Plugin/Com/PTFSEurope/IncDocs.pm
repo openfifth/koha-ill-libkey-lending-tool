@@ -941,9 +941,6 @@ sub backend_metadata {
         }
     }
 
-    my $rd_title_key = 'Journal title';
-    $metadata->{Title} = $metadata->{$rd_title_key} if $metadata->{$rd_title_key};
-
     return $metadata;
 }
 
@@ -1266,14 +1263,6 @@ sub fieldmap {
         title => {
             exclude        => 1,
             type           => "string",
-            label          => "Journal title",
-            ill            => "title",
-            api_max_length => 255,
-            position       => 0
-        },
-        atitle => {
-            exclude        => 1,
-            type           => "string",
             label          => "Article title",
             ill            => "article_title",
             api_max_length => 255,
@@ -1287,20 +1276,6 @@ sub fieldmap {
             api_max_length => 255,
             no_submit      => 1,
             position       => 1
-        },
-        aufirst => {
-            type           => "string",
-            label          => "Author's first name",
-            ill            => "article_author",
-            api_max_length => 50,
-            position       => 2,
-            join           => "aulast"
-        },
-        aulast => {
-            type           => "string",
-            label          => "Author's last name",
-            api_max_length => 50,
-            position       => 3
         },
         volume => {
             type           => "string",
@@ -1393,9 +1368,9 @@ sub fieldmap {
             no_submit => 1,
             position  => 99
         },
-        author => {
+        authors => {
             type      => "string",
-            label     => "Author",
+            label     => "Authors",
             ill       => "author",
             exclude   => 1,
             no_submit => 1,
@@ -1651,6 +1626,8 @@ sub availability {
     $response->{backend_availability} = $result;
     $response->{future}               = "commit";
     $response->{illrequest_id}        = $request->illrequest_id;
+
+    $self->create_illrequestattributes( $request, $result->{response}->{data} );
 
     return $response;
 }
