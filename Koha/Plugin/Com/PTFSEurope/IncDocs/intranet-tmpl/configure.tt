@@ -15,12 +15,12 @@
                         <input type="hidden" name="method" value="[% METHOD %]"/>
                         <li>
                             <label for="IncDocs_access_token_input">Access token: </label>
-                            <input id="IncDocs_access_token_input" class="required_input" placeholder="Enter access token" type="text" name="access_token" value="[% config.access_token | html %]">
+                            <input id="IncDocs_access_token_input" class="required_input" placeholder="Enter access token" type="text" name="access_token" value="[% config.access_token | html %]" size="35">
                             <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The access token to be used for accessing the LibKey Lending Tool (IncDocs) API"><i class="fa-solid fa-circle-question"></i></a>
                         </li>
                         <li>
                             <label for="IncDocs_library_group_input">Library group: </label>
-                            <input id="IncDocs_library_group_input" class="required_input" placeholder="Enter library group" type="text" name="library_group" value="[% config.library_group | html %]">
+                            <input id="IncDocs_library_group_input" class="required_input" placeholder="Enter library group" type="text" name="library_group" value="[% config.library_group | html %]" size="35">
                             <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The library group to be used for accessing the IncDocs API"><i class="fa-solid fa-circle-question"></i></a>
                         </li>
                     </ol>
@@ -30,7 +30,7 @@
                     <ol>
                         <li>
                             <label for="IncDocs_payload_customreference_input">Custom reference: </label>
-                            <input id="IncDocs_payload_customreference_input" class="required_input" placeholder="PTFS-Europe TEST - DO NOT FULFILL" type="text" name="payload_customreference" value="[% config.payload_customreference | html %]" size="50">
+                            <input id="IncDocs_payload_customreference_input" class="required_input" placeholder="PTFS-Europe TEST - DO NOT FULFILL" type="text" name="payload_customreference" value="[% config.payload_customreference | html %]" size="35">
                             <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The hardcoded customReference to be sent when placing the request"><i class="fa-solid fa-circle-question"></i></a>
                         </li>
                     </ol>
@@ -40,12 +40,12 @@
                     <ol>
                         <li>
                             <label for="incdocs_patron_libraryidfield_input"><strong>IncDocs Library ID</strong> field for patron records: </label>
-                            <input id="incdocs_patron_libraryidfield_input" class="required_input" placeholder="Enter patron attribute code" type="text" name="patron_libraryidfield" value="[% config.patron_libraryidfield | html %]">
+                            <input id="incdocs_patron_libraryidfield_input" class="required_input" placeholder="Enter patron attribute code" type="text" name="patron_libraryidfield" value="[% config.patron_libraryidfield | html %]" size="35">
                             <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The Koha patron attribute type code used to match the patron record with the IncDocs library id field."><i class="fa-solid fa-circle-question"></i></a>
                         </li>
                         <li>
                             <label for="incdocs_library_libraryidfield_input"><strong>IncDocs Library ID</strong> field for library records: </label>
-                            <input id="incdocs_library_libraryidfield_input" class="required_input" placeholder="Enter library additional field code" type="text" name="library_libraryidfield" value="[% config.library_libraryidfield | html %]">
+                            <input id="incdocs_library_libraryidfield_input" class="required_input" placeholder="Enter library additional field code" type="text" name="library_libraryidfield" value="[% config.library_libraryidfield | html %]" size="35">
                             <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The Koha library additional field code used to match the library record with the IncDocs library id field."><i class="fa-solid fa-circle-question"></i></a>
                         </li>
                     </ol>
