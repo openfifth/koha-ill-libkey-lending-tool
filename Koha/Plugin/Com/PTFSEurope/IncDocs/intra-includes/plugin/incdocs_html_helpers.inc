@@ -17,7 +17,7 @@
                 <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a>
             [% END %]
             [% WRAPPER breadcrumb_item %]
-                <a href="/cgi-bin/koha/plugins/plugins-home.pl">IncDocs</a>
+                <a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3APTFSEurope%3A%3AIncDocs&amp;method=configure">IncDocs</a>
             [% END %]
             [% FOREACH incdocs_bc_item IN incdocs_bc_items %]
                 [% WRAPPER breadcrumb_item bc_active = incdocs_bc_item.active %]
