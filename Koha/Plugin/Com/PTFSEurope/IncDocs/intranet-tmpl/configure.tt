@@ -6,6 +6,9 @@
     <div class="row">
         <div class="col-md-10 order-md-2 order-sm-1">
             <h1>IncDocs configuration</h1>
+            [% IF saved %]
+                <div class="alert alert-info">Configuration saved</div>
+            [% END %]
             <form id="IncDocs_configure" method="get">
                 <fieldset class="rows">
                     <legend>API credentials</legend>
