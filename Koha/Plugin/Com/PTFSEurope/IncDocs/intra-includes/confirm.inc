@@ -22,7 +22,7 @@
                 <h3>IncDocs availability response details:</h2>
                 [% FOREACH item IN incdocsRsp %]
                     <tr>
-                    <td style="padding: 5px">[% item.key %]</td>
+                    <td style="padding: 5px"><strong>[% item.key %]</strong></td>
                     <td style="padding: 5px">
                     [% IF item.value.size > 1 %]
                         [% FOREACH subitem IN item.value %]

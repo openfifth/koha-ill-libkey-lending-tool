@@ -20,7 +20,7 @@
               <h3>IncDocs status response details:</h2>
               [% FOREACH item IN value %]
                   <tr>
-                  <td style="padding: 5px">[% item.key %]</td>
+                  <td style="padding: 5px"><strong>[% item.key %]</strong></td>
                   <td style="padding: 5px">
                   [% IF item.value.size > 1 %]
                       [% FOREACH subitem IN item.value %]
