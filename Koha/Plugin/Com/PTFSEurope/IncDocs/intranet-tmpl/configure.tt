@@ -34,7 +34,7 @@
                             <li>
                                 <label for="IncDocs_payload_customreference_input">Custom reference: </label>
                                 <input id="IncDocs_payload_customreference_input" class="required_input" placeholder="PTFS-Europe TEST - DO NOT FULFILL" type="text" name="payload_customreference" value="[% config.payload_customreference | html %]" size="35">
-                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The hardcoded customReference to be sent when placing the request"><i class="fa-solid fa-circle-question"></i></a>
+                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The hardcoded customReference to be sent when placing the request. Otherwise, it will be sent empty"><i class="fa-solid fa-circle-question"></i></a>
                             </li>
                         </ol>
                     </div>
