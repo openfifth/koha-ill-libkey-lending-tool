@@ -858,23 +858,9 @@ sub confirm {
         return $self->availability($params);
     } elsif ( 'commit' eq $stage ) {
         return $self->create_request($params);
+    } else {
+        die "Confirm Unexpected Stage";
     }
-
-    my $return = $self->create_request( $params->{request} );
-
-    my $return_value = {
-        cwd     => dirname(__FILE__),
-        error   => 0,
-        status  => "",
-        message => "",
-        method  => "create",
-        stage   => "commit",
-        next    => "illview",
-        value   => {},
-        %{$return}
-    };
-
-    return $return_value;
 }
 
 =head3 log_request_outcome
