@@ -8,7 +8,7 @@
             [% IF whole.backend_availability.error %]
                 <h3 class="text-danger">[% whole.backend_availability.error %]</h2>
             [% END %]
-            [% IF whole.backend_availability.success %]
+            [% IF whole.backend_availability.success.defined %]
                 <h3 class="text-success">This item is available</h3>
                 <h3 class="text-success">[% whole.backend_availability.success %]</h2>
                 <li>

@@ -101,7 +101,7 @@ sub Backend_Availability {
             status  => 200,
             openapi => {
                 response => $response,
-                success  => "At library: " . $response->{data}->{illLibraryName},
+                success  => "",
             }
         );
     } elsif ( $response && !$response->{data}->{illLibraryName} ) {
