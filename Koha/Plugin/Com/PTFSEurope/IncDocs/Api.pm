@@ -56,7 +56,7 @@ sub Backend_Availability {
         return $c->render(
             status  => 400,
             openapi => {
-                error => 'Library id field not configured.',
+                error => 'Missing plugin configuration: Library id field not configured.',
             }
         );
     }
@@ -82,7 +82,7 @@ sub Backend_Availability {
         return $c->render(
             status  => 400,
             openapi => {
-                error => 'Library ' . $library->branchname . ' does not have a value for ' . $additional_field->name,
+                error => 'Destination library ' . $library->branchname . ' does not have a value for ' . $additional_field->name,
             }
         );
     }
