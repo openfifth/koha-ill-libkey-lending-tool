@@ -969,6 +969,8 @@ sub capabilities {
 
         provides_batch_requests => sub { return 1; },
 
+        unmediated_ill => sub { $self->unmediated_confirm(@_); },
+
         # We can create ILL requests with data passed from the API
         create_api => sub { $self->create_api(@_) },
 
@@ -1706,6 +1708,38 @@ sub status {
             stage   => "commit",
         };
     }
+}
+
+=head3 unmediated_confirm
+
+    my $response = $IncDocs->unmediated_confirm( $params );
+
+Return an ILL standard response for the confirm method call, in the case of
+an unmediated workflow.
+
+In the context of IncDocs this involves skipping the availability lookup
+and placing the fulfilment request directly.
+
+=cut
+
+sub unmediated_confirm {
+    my ( $self, $params ) = @_;
+
+    my $availability = $self->availability($params);
+
+    $params->{other}->{articleId} = delete $availability->{backend_availability}->{response}->{data}->{id};
+    $params->{other}->{lenderLibraryId} =
+        delete $availability->{backend_availability}->{response}->{data}->{illLibraryId};
+
+    if ( $availability->{backend_availability}->{response} ) {
+        $params->{other} = {
+            %{ $params->{other} || {} },
+            %{ $availability->{backend_availability}->{response}->{data} || {} }
+        };
+    }
+
+
+    return $self->create_request($params);
 }
 
 1;
