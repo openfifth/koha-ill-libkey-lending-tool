@@ -787,13 +787,19 @@ sub create_request {
 
     my $requesterLibraryId = $incdocs_id->value;
 
+    my $patron = $request->borrowernumber ? Koha::Patrons->find( $request->borrowernumber ) : undef;
+    my $requesterEmail =
+        $patron
+        ? ( $patron->notice_email_address ? $patron->notice_email_address : $config->{payload_requesteremail} )
+        : '';
+
     # # Make the request with IncDocs Lending Tool via the koha-plugin-IncDocs API
     my $result = $incdocs_api->Create_Fulfillment_Request(
         {
             articleId          => $submission->{other}->{articleId},
             customReference    => $config->{payload_customreference} || '',
             lenderLibraryId    => $submission->{other}->{lenderLibraryId},
-            requesterEmail     => 'pedro.amorim@ptfs-europe.com',
+            requesterEmail     => $requesterEmail,
             requesterLibraryId => $requesterLibraryId,
             type               => 'fulfillment-requests'
         }
