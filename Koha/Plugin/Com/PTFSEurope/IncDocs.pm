@@ -800,7 +800,9 @@ sub create_request {
     );
 
     if ( $result->{error} ) {
-        $request->append_to_note( $result->{error} );
+        my $error_string = join ', ',
+            map { "IncDocs returned error: $_->{title} (status: $_->{status})" } @{ $result->{error} };
+        $request->append_to_note($error_string);
         $request->status('ERROR')->store;
         return {
             error   => 0,

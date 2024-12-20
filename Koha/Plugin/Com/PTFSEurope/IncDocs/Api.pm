@@ -134,6 +134,13 @@ sub Create_Fulfillment_Request {
             status  => 200,
             openapi => $response->{data}
         );
+    } elsif ( $response->{errors} ) {
+        return $c->render(
+            status  => 400,
+            openapi => {
+                error => $response->{errors},
+            }
+        );
     } else {
         return $c->render(
             status  => 400,
