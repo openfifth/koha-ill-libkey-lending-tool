@@ -11,9 +11,17 @@
             [% IF whole.backend_availability.success.defined %]
                 <h3 class="text-success">This item is available</h3>
                 <h3 class="text-success">[% whole.backend_availability.success %]</h2>
-                <li>
-                    <a class="btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?op=[% whole.method %]&amp;illrequest_id=[% whole.illrequest_id %]&amp;stage=[% whole.future %]&amp;articleId=[% incdocsRsp.id %]&amp;lenderLibraryId=[% incdocsRsp.illLibraryId %]">Place request with IncDocs</a>
-                </li>
+                    [% SET get_params = "op=" _ whole.method _ "&stage=" _ whole.future _ "&illrequest_id=" _ whole.illrequest_id %]
+                    [% FOREACH key IN incdocsRsp.keys %]
+                        [% value = incdocsRsp.$key %]
+                        [% IF key != 'op' && key != 'method' && key != 'custom_key' && key != 'custom_value' && key != 'csrf_token' %]
+                            [% SET value = value | uri %]
+                            [% get_params = get_params _ "&" _ key _ "=" _ value %]
+                        [% END %]
+                    [% END %]
+                    <li>
+                        <a class="btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?[% get_params %]">Place request with IncDocs</a>
+                    </li>
             [% END %]
                 <li>
                     <a href="/cgi-bin/koha/ill/ill-requests.pl?op=illview&amp;illrequest_id=[% whole.illrequest_id %]">Return to request</a>
