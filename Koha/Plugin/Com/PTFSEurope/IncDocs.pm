@@ -1416,6 +1416,13 @@ sub fieldmap {
             no_submit => 1,
             position  => 99
         },
+        lenderLibraryName => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Lender library name",
+            no_submit => 1,
+            position  => 99
+        },
         incdocs_type => {
             type      => "string",
             exclude   => 1,
@@ -1787,9 +1794,11 @@ sub incdocs_api_response_to_request {
     my ( $params ) = @_;
 
     my $map = {
-        id           => 'articleId',
-        illLibraryId => 'lenderLibraryId',
+        id             => 'articleId',
+        illLibraryId   => 'lenderLibraryId',
+        illLibraryName => 'lenderLibraryName',
     };
+
     foreach my $key ( keys %{$params} ) {
         if ( exists $map->{$key} ) {
             $params->{$map->{$key}} = delete $params->{$key};
