@@ -1491,6 +1491,14 @@ sub fieldmap {
             label     => "Library groupd ID",
             no_submit => 1,
             position  => 99
+        },
+        declined_lenderLibraryId_list => {
+            type      => "string",
+            exclude   => 1,
+            label     => "declined libraries list",
+            no_submit => 1,
+            hide      => 1,
+            position  => 99
         }
     };
 }
@@ -1652,19 +1660,20 @@ sub availability {
     my $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata } );
 
     if ( $request->status eq 'REQREV' ) {
-        my $previous_incdocs_library_id =
-            $params->{request}->extended_attributes->find( { type => 'lenderLibraryId' } );
+        my $declined_lenderLibraryId_list =
+            $params->{request}->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } );
 
-        if ( $previous_incdocs_library_id && $previous_incdocs_library_id->value ) {
+        if ( $declined_lenderLibraryId_list && $declined_lenderLibraryId_list->value ) {
+            my @declined_lenderLibraryId_array = split( /\|/, $declined_lenderLibraryId_list->value );
             my $api_calls = 0;
-            while ($result->{response}->{data}->{illLibraryId} eq $previous_incdocs_library_id->value
-                && $api_calls < 5 )
+            while (grep( { $result->{response}->{data}->{illLibraryId} eq $_ } @declined_lenderLibraryId_array )
+                && $api_calls < 15 )
             {
                 $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata } );
                 $api_calls++;
             }
 
-            if ( $result->{response}->{data}->{illLibraryId} eq $previous_incdocs_library_id->value ) {
+            if ( grep( { $result->{response}->{data}->{illLibraryId} eq $_ } @declined_lenderLibraryId_array ) ) {
                 $response->{backend_availability}->{error} = 'Not found at any different library';
                 $response->{illrequest_id} = $request->illrequest_id;
                 return $response;
@@ -1741,6 +1750,25 @@ sub status {
             $request->status('REQREV');
             $request->append_to_note(
                 'IncDocs library ID ' . $result->{lenderLibraryId} . ' decline reason: ' . $result->{declinedReason} );
+
+            my $declined_lenderLibraryId_list =
+                $params->{request}->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } );
+
+            my $list = '';
+            if( $declined_lenderLibraryId_list ) {
+                $list = $declined_lenderLibraryId_list->value;
+                $params->{request}->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } )->delete;
+            }
+
+            my @declined_lenderLibraryId_array  = split(/\|/, $list);
+
+            my $library_id = '2832'; #$result->{lenderLibraryId};
+            unless ( grep { $_ eq $library_id } @declined_lenderLibraryId_array ) {
+                push @declined_lenderLibraryId_array, $library_id;
+            }
+            my $string = join "|", @declined_lenderLibraryId_array;
+
+            $self->create_illrequestattributes( $params->{request}, { declined_lenderLibraryId_list => $string } );
         }
 
         # Log the outcome
