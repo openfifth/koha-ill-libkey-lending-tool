@@ -1,0 +1,4 @@
+[% PROCESS 'ill-request-log.inc' %]
+[% WRAPPER ill_request_log action_label = 'IncDocs request placed ' %]
+    IncDocs article requested to library [% log.info.response %]
+[% END %]

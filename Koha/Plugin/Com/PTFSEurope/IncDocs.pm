@@ -172,8 +172,9 @@ sub new_ill_backend {
 
     $self->{_api}      = $api;
     $self->{templates} = {
-        'INCDOCS_MIGRATE_IN'   => $log_tt_dir . 'incdocs_migrate_in.tt',
-        'INCDOCS_STATUS_CHECK' => $log_tt_dir . 'incdocs_status_check.tt'
+        'INCDOCS_MIGRATE_IN'     => $log_tt_dir . 'incdocs_migrate_in.tt',
+        'INCDOCS_STATUS_CHECK'   => $log_tt_dir . 'incdocs_status_check.tt',
+        'INCDOCS_REQUEST_PLACED' => $log_tt_dir . 'incdocs_request_placed.tt'
     };
     $self->{_logger} = $params->{logger} if ( $params->{logger} );
 
@@ -830,6 +831,15 @@ sub create_request {
     $request->orderid( $result->{incdocs_id} );
     $request->status('REQ');
     $request->store;
+
+    # Log the outcome
+    $self->log_request_outcome(
+        {
+            outcome => 'INCDOCS_REQUEST_PLACED',
+            request => $request,
+            message => $result->{lenderLibraryId}
+        }
+    );
 
     $self->create_illrequestattributes( $request, $result );
 
