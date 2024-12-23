@@ -796,6 +796,12 @@ sub create_request {
 
     $submission->{other} = incdocs_api_response_to_request( $submission->{other} );
 
+    if($request->status eq 'REQREV') {
+        _reset_incdocs_info($request);
+    }
+
+    $self->create_illrequestattributes( $request, $submission->{other} );
+
     # # Make the request with IncDocs Lending Tool via the koha-plugin-IncDocs API
     my $result = $incdocs_api->Create_Fulfillment_Request(
         {
@@ -1653,8 +1659,6 @@ sub availability {
         $request->status( 'UNAVAILABLE' )->store if ( $request->status ne 'UNAVAILABLE' );
     }
 
-    $self->create_illrequestattributes( $request, $result->{response}->{data} );
-
     return $response;
 }
 
@@ -1806,6 +1810,24 @@ sub incdocs_api_response_to_request {
     }
 
     return $params;
+}
+
+=head3 _reset_incdocs_info
+
+Delete IncDocs related attributes
+
+=cut
+sub _reset_incdocs_info {
+    my ( $request ) = @_;
+
+    $request->illrequestattributes->search( { type => 'lenderLibraryId' } )->delete;
+    $request->illrequestattributes->search( { type => 'lenderLibraryName' } )->delete;
+    $request->illrequestattributes->search( { type => 'requesterEmail' } )->delete;
+    $request->illrequestattributes->search( { type => 'lastUpdated' } )->delete;
+    $request->illrequestattributes->search( { type => 'incdocs_id' } )->delete;
+    $request->illrequestattributes->search( { type => 'created' } )->delete;
+    $request->illrequestattributes->search( { type => 'articleId' } )->delete;
+    $request->illrequestattributes->search( { type => 'date' } )->delete;
 }
 
 1;
