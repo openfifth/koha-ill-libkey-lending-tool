@@ -1687,7 +1687,8 @@ sub status {
             $request->status('COMP');
         } elsif ( $result->{status} eq 'declined' ) {
             $request->status('REQREV');
-            $request->append_to_note( 'IncDocs decline reason: ' . $result->{declinedReason} );
+            $request->append_to_note(
+                'IncDocs library ID ' . $result->{lenderLibraryId} . ' decline reason: ' . $result->{declinedReason} );
         }
 
         # Log the outcome
