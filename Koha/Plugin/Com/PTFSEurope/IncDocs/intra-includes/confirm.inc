@@ -15,7 +15,7 @@
                     [% FOREACH key IN incdocsRsp.keys %]
                         [% value = incdocsRsp.$key %]
                         [% IF key != 'op' && key != 'method' && key != 'custom_key' && key != 'custom_value' && key != 'csrf_token' %]
-                            [% SET value = value | uri %]
+                            [% value = value | uri %]
                             [% get_params = get_params _ "&" _ key _ "=" _ value %]
                         [% END %]
                     [% END %]
