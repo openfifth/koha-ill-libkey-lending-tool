@@ -1651,12 +1651,40 @@ sub availability {
 
     my $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata } );
 
+    if ( $request->status eq 'REQREV' ) {
+        my $previous_incdocs_library_id =
+            $params->{request}->extended_attributes->find( { type => 'lenderLibraryId' } );
+
+        if ( $previous_incdocs_library_id && $previous_incdocs_library_id->value ) {
+            my $api_calls = 0;
+            while ($result->{response}->{data}->{illLibraryId} eq $previous_incdocs_library_id->value
+                && $api_calls < 5 )
+            {
+                $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata } );
+                $api_calls++;
+            }
+
+            if ( $result->{response}->{data}->{illLibraryId} eq $previous_incdocs_library_id->value ) {
+                $response->{backend_availability}->{error} = 'Not found at any different library';
+                $response->{illrequest_id} = $request->illrequest_id;
+                return $response;
+            } else {
+                $response->{fresh_library} = 1;
+            }
+        }
+    }
+
     $response->{backend_availability} = $result;
     $response->{future}               = "commit";
     $response->{illrequest_id}        = $request->illrequest_id;
 
-    if ( $response->{backend_availability}->{error}  && $response->{backend_availability}->{error} eq 'Not found at any library' ) {
-        $request->status( 'UNAVAILABLE' )->store if ( $request->status ne 'UNAVAILABLE' );
+    if (
+        $response->{backend_availability}->{error}
+        && (   $response->{backend_availability}->{error} eq 'Not found at any library'
+            || $response->{backend_availability}->{error} eq 'Not found at any different library' )
+        )
+    {
+        $request->status('UNAVAILABLE')->store if ( $request->status ne 'UNAVAILABLE' );
     }
 
     return $response;

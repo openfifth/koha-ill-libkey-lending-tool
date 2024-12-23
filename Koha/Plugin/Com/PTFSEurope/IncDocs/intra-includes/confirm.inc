@@ -9,7 +9,10 @@
                 <h3 class="text-danger">[% whole.backend_availability.error %]</h2>
             [% END %]
             [% IF whole.backend_availability.success.defined %]
-                <h3 class="text-success">This item is available</h3>
+                <h3 class="text-success">
+                    This item is available
+                    [% IF whole.fresh_library %] at a different library [% END %]
+                </h3>
                 <h3 class="text-success">[% whole.backend_availability.success %]</h2>
                     [% SET get_params = "op=" _ whole.method _ "&stage=" _ whole.future _ "&illrequest_id=" _ whole.illrequest_id %]
                     [% FOREACH key IN incdocsRsp.keys %]
