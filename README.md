@@ -2,11 +2,18 @@
 
 This backend provides the ability to create Interlibrary Loan requests using the LibKey Lending Tool API service.
 
-## ILLModuleUnmediated
+## System preferences
+
+### ILLModuleUnmediated
 
 This backend utilizes the ILLModuleUnmediated system preference.
 If enabled, requests are placed with IncDocs as soon as they're created and are set to "Requested" status.
 Otherwise, requests are created with the "New" status and manual confirmation to place the request with IncDocs is required.
+
+### IllLog
+
+This backend utilizes the IllLog system preference.
+If enabled, IncDocs transactions are stored in the ILL request log for review.
 
 ## Requirements
 

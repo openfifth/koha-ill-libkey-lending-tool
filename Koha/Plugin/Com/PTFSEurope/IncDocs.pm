@@ -173,7 +173,7 @@ sub new_ill_backend {
     $self->{_api}      = $api;
     $self->{templates} = {
         'INCDOCS_MIGRATE_IN'   => $log_tt_dir . 'incdocs_migrate_in.tt',
-        'INCDOCS_STATUS_CHECK' => dirname(__FILE__) . '/intra-includes/log/incdocs_status_check.tt'
+        'INCDOCS_STATUS_CHECK' => $log_tt_dir . 'incdocs_status_check.tt'
     };
     $self->{_logger} = $params->{logger} if ( $params->{logger} );
 
@@ -1680,22 +1680,15 @@ sub status {
             $request->append_to_note( 'IncDocs decline reason: ' . $result->{declinedReason} );
         }
 
-        # Log this check if appropriate
-        if ( $self->_logger ) {
-            my $logger = $self->_logger;
-            $logger->log_something(
-                {
-                    actionname   => 'INCDOCS_STATUS_CHECK',
-                    objectnumber => $params->{request}->id,
-                    infos        => to_json(
-                        {
-                            log_origin => $self->name,
-                            response   => $status->{value}
-                        }
-                    )
-                }
-            );
-        }
+        # Log the outcome
+        $self->log_request_outcome(
+            {
+                outcome => 'INCDOCS_STATUS_CHECK',
+                request => $request,
+                message => $result->{status}
+            }
+        );
+
         return $status;
     } else {
 
