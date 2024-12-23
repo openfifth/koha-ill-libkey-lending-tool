@@ -796,13 +796,13 @@ sub create_request {
 
     $submission->{other} = incdocs_api_response_to_request( $submission->{other} );
 
-    if($request->status eq 'REQREV') {
+    if ( $request->status eq 'REQREV' ) {
         _reset_incdocs_info($request);
     }
 
     $self->create_illrequestattributes( $request, $submission->{other} );
 
-    # # Make the request with IncDocs Lending Tool via the koha-plugin-IncDocs API
+    # Make the request with IncDocs Lending Tool via the koha-plugin-IncDocs API
     my $result = $incdocs_api->Create_Fulfillment_Request(
         {
             articleId          => $submission->{other}->{articleId},
@@ -1017,7 +1017,7 @@ sub _can_create_request {
 sub status_graph {
     return {
         EDITITEM => {
-            prev_actions   => ['NEW', 'UNAVAILABLE'],
+            prev_actions   => [ 'NEW', 'UNAVAILABLE' ],
             id             => 'EDITITEM',
             name           => 'Edited item metadata',
             ui_method_name => 'Edit item metadata',
@@ -1044,7 +1044,7 @@ sub status_graph {
             ui_method_icon => 'fa-search',
         },
         COMP => {
-            prev_actions   => ['ERROR', 'UNAVAILABLE'],
+            prev_actions   => [ 'ERROR', 'UNAVAILABLE' ],
             id             => 'COMP',
             name           => 'Order Complete',
             ui_method_name => 'Mark completed',
@@ -1065,7 +1065,7 @@ sub status_graph {
             ui_method_icon => 'fa-check',
         },
         UNAVAILABLE => {
-            prev_actions   => [ 'NEW' ],
+            prev_actions   => ['NEW'],
             id             => 'REQ',
             name           => 'Unavailable',
             ui_method_name => 0,
@@ -1784,7 +1784,6 @@ sub unmediated_confirm {
         };
     }
 
-
     return $self->create_request($params);
 }
 
@@ -1795,7 +1794,7 @@ Incdocs uses different names to refer to the same thing.
 =cut
 
 sub incdocs_api_response_to_request {
-    my ( $params ) = @_;
+    my ($params) = @_;
 
     my $map = {
         id             => 'articleId',
@@ -1805,7 +1804,7 @@ sub incdocs_api_response_to_request {
 
     foreach my $key ( keys %{$params} ) {
         if ( exists $map->{$key} ) {
-            $params->{$map->{$key}} = delete $params->{$key};
+            $params->{ $map->{$key} } = delete $params->{$key};
         }
     }
 
@@ -1817,8 +1816,9 @@ sub incdocs_api_response_to_request {
 Delete IncDocs related attributes
 
 =cut
+
 sub _reset_incdocs_info {
-    my ( $request ) = @_;
+    my ($request) = @_;
 
     $request->illrequestattributes->search( { type => 'lenderLibraryId' } )->delete;
     $request->illrequestattributes->search( { type => 'lenderLibraryName' } )->delete;
