@@ -1011,7 +1011,7 @@ sub _can_create_request {
 sub status_graph {
     return {
         EDITITEM => {
-            prev_actions   => ['NEW'],
+            prev_actions   => ['NEW', 'UNAVAILABLE'],
             id             => 'EDITITEM',
             name           => 'Edited item metadata',
             ui_method_name => 'Edit item metadata',
@@ -1038,7 +1038,7 @@ sub status_graph {
             ui_method_icon => 'fa-search',
         },
         COMP => {
-            prev_actions   => ['ERROR'],
+            prev_actions   => ['ERROR', 'UNAVAILABLE'],
             id             => 'COMP',
             name           => 'Order Complete',
             ui_method_name => 'Mark completed',
@@ -1050,12 +1050,21 @@ sub status_graph {
         # Override REQ so we can rename the button
         # Talk about a sledgehammer to crack a nut
         REQ => {
-            prev_actions   => [ 'NEW', 'QUEUED', 'CANCREQ' ],
+            prev_actions   => [ 'NEW', 'QUEUED', 'CANCREQ', 'UNAVAILABLE' ],
             id             => 'REQ',
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs',
             method         => 'confirm',
             next_actions   => ['STAT'],
+            ui_method_icon => 'fa-check',
+        },
+        UNAVAILABLE => {
+            prev_actions   => [ 'NEW' ],
+            id             => 'REQ',
+            name           => 'Unavailable',
+            ui_method_name => 0,
+            method         => 0,
+            next_actions   => ['COMP', 'EDITITEM', 'MIG', 'KILL', 'REQ'],
             ui_method_icon => 'fa-check',
         },
         REQREV => {
@@ -1068,7 +1077,7 @@ sub status_graph {
             ui_method_icon => 'fa-times',
         },
         MIG => {
-            prev_actions   => [ 'NEW', 'GENREQ', 'REQREV', 'QUEUED' ],
+            prev_actions   => [ 'NEW', 'GENREQ', 'REQREV', 'QUEUED', 'UNAVAILABLE' ],
             id             => 'MIG',
             name           => 'Switched provider',
             ui_method_name => 'Switch provider',
@@ -1633,6 +1642,10 @@ sub availability {
     $response->{future}               = "commit";
     $response->{illrequest_id}        = $request->illrequest_id;
 
+    if ( $response->{backend_availability}->{error}  && $response->{backend_availability}->{error} eq 'Not found at any library' ) {
+        $request->status( 'UNAVAILABLE' )->store if ( $request->status ne 'UNAVAILABLE' );
+    }
+
     $self->create_illrequestattributes( $request, $result->{response}->{data} );
 
     return $response;
@@ -1735,6 +1748,23 @@ sub unmediated_confirm {
 
     $params->{other} = { %{ $availability->{backend_availability}->{response}->{data} }, %{ $params->{other} } };
     $params->{other} = incdocs_api_response_to_request( $params->{other} );
+
+    if (   $availability->{backend_availability}->{error}
+        && $availability->{backend_availability}->{error} eq 'Not found at any library' )
+    {
+        my $request = Koha::ILL::Requests->find( $availability->{illrequest_id} );
+        $request->status('UNAVAILABLE')->store if ( $request->status ne 'UNAVAILABLE' );
+
+        return {
+            error   => 0,
+            status  => '',
+            message => '',
+            method  => 'confirm',
+            stage   => 'commit',
+            next    => 'illview',
+            value   => {}
+        };
+    }
 
     if ( $availability->{backend_availability}->{response} ) {
         $params->{other} = {
