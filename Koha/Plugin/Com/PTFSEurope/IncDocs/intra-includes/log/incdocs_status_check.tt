@@ -1,4 +1,4 @@
 [% PROCESS 'ill-request-log.inc' %]
 [% WRAPPER ill_request_log action_label = 'IncDocs status checked ' %]
-    received IncDocs status &quot;[% log.info.response %]&quot;
+    Received IncDocs status &quot;[% log.info.response %]&quot;
 [% END %]
