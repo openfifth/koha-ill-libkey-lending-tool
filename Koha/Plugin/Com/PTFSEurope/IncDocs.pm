@@ -1044,7 +1044,7 @@ sub status_graph {
             ui_method_icon => 'fa-search',
         },
         COMP => {
-            prev_actions   => [ 'ERROR', 'UNAVAILABLE' ],
+            prev_actions   => [ 'ERROR', 'UNAVAILABLE', 'REQ' ],
             id             => 'COMP',
             name           => 'Order Complete',
             ui_method_name => 'Mark completed',
@@ -1061,7 +1061,7 @@ sub status_graph {
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs',
             method         => 'confirm',
-            next_actions   => ['STAT'],
+            next_actions   => [ 'STAT', 'COMP' ],
             ui_method_icon => 'fa-check',
         },
         UNAVAILABLE => {
@@ -1665,8 +1665,8 @@ sub availability {
 
         if ( $declined_lenderLibraryId_list && $declined_lenderLibraryId_list->value ) {
             my @declined_lenderLibraryId_array = split( /\|/, $declined_lenderLibraryId_list->value );
-            my $api_calls = 0;
-            while (grep( { $result->{response}->{data}->{illLibraryId} eq $_ } @declined_lenderLibraryId_array )
+            my $api_calls                      = 0;
+            while ( grep( { $result->{response}->{data}->{illLibraryId} eq $_ } @declined_lenderLibraryId_array )
                 && $api_calls < 15 )
             {
                 $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata } );
@@ -1755,14 +1755,14 @@ sub status {
                 $params->{request}->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } );
 
             my $list = '';
-            if( $declined_lenderLibraryId_list ) {
+            if ($declined_lenderLibraryId_list) {
                 $list = $declined_lenderLibraryId_list->value;
                 $params->{request}->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } )->delete;
             }
 
-            my @declined_lenderLibraryId_array  = split(/\|/, $list);
+            my @declined_lenderLibraryId_array = split( /\|/, $list );
 
-            my $library_id = '2832'; #$result->{lenderLibraryId};
+            my $library_id = $result->{lenderLibraryId};
             unless ( grep { $_ eq $library_id } @declined_lenderLibraryId_array ) {
                 push @declined_lenderLibraryId_array, $library_id;
             }
