@@ -1,6 +1,8 @@
-# Koha Interlibrary Loans Incdocs Lending Tool backend
+# Koha ILL Incdocs Lending Tool backend
 
 This backend provides the ability to create Interlibrary Loan requests using the LibKey Lending Tool API service.
+
+![workflow diagram](https://github.com/PTFS-Europe/koha-ill-libkey-lending-tool/blob/main/incdocs_workflow.png?raw=true)
 
 ## System preferences
 
@@ -25,4 +27,3 @@ This plugin requires [bug 38663](https://bugs.koha-community.org/bugzilla3/show_
 
 * [https://thirdiron.atlassian.net/wiki/spaces/BrowZineAPIDocs/pages/3550019585/LibKey+Lending+Tool+API+Documentation](https://thirdiron.atlassian.net/wiki/spaces/BrowZineAPIDocs/pages/3550019585/LibKey+Lending+Tool+API+Documentation).
 
-![new version release](https://github.com/PTFS-Europe/koha-ill-libkey-lending-tool/blob/main/incdocs_workflow.png?raw=true)
