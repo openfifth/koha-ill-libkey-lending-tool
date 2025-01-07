@@ -201,6 +201,7 @@ sub _make_request {
     my $ua       = LWP::UserAgent->new;
     my $response = $ua->request($request);
 
+    return unless $response->is_success;
     return decode_json( $response->decoded_content );
 }
 
