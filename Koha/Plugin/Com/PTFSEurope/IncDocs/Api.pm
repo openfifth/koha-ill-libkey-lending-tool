@@ -75,6 +75,18 @@ sub Backend_Availability {
     my $library = Koha::Libraries->find( $metadata->{branchcode} );
     my $additional_field =
         Koha::AdditionalFields->search( { name => $config->{library_libraryidfield}, tablename => 'branches' } )->next;
+
+    unless ($additional_field) {
+        return $c->render(
+            status  => 400,
+            openapi => {
+                      error => 'Configured additional field '
+                    . $config->{library_libraryidfield}
+                    . ' does not exist for libraries'
+            }
+        );
+    }
+
     my $incdocs_id = $library->additional_field_values->search(
         { 'record_id' => $library->id, 'field_id' => $additional_field->id } )->next;
 
