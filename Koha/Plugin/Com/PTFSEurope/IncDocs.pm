@@ -1286,8 +1286,8 @@ sub fieldmap {
         title => {
             exclude        => 1,
             type           => "string",
-            label          => "Article title",
-            ill            => "article_title",
+            label          => "Title",
+            ill            => "title",
             api_max_length => 255,
             position       => 1
         },
