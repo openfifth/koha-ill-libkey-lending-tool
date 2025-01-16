@@ -1014,7 +1014,7 @@ sub _can_create_request {
 sub status_graph {
     return {
         EDITITEM => {
-            prev_actions   => [ 'NEW', 'UNAVAILABLE' ],
+            prev_actions   => [ 'NEW', 'UNAVAILABLE', 'UNAUTH' ],
             id             => 'EDITITEM',
             name           => 'Edited item metadata',
             ui_method_name => 'Edit item metadata',
@@ -1087,6 +1087,15 @@ sub status_graph {
             method         => 'migrate',
             next_actions   => [ 'REQ', 'GENREQ', 'KILL', 'MIG' ],
             ui_method_icon => 'fa-search',
+        },
+        UNAUTH => {
+            prev_actions   => [],
+            id             => 'UNAUTH',
+            name           => 'Unauthenticated',
+            ui_method_name => 0,
+            method         => 0,
+            next_actions   => [ 'REQ', 'MIG', 'KILL', 'EDITITEM' ],
+            ui_method_icon => 0,
         },
     };
 }
