@@ -789,10 +789,7 @@ sub create_request {
     my $requesterLibraryId = $incdocs_id->value;
 
     my $patron = $request->borrowernumber ? Koha::Patrons->find( $request->borrowernumber ) : undef;
-    my $requesterEmail =
-        $patron
-        ? ( $patron->notice_email_address ? $patron->notice_email_address : $config->{payload_requesteremail} )
-        : '';
+    my $requesterEmail = $patron ? $patron->notice_email_address // $config->{payload_requesteremail} : $config->{payload_requesteremail};
 
     $submission->{other} = incdocs_api_response_to_request( $submission->{other} );
 
