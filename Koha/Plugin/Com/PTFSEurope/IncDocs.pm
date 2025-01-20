@@ -1738,6 +1738,23 @@ sub status {
             Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend(
             { logger => Koha::ILL::Request::Logger->new } );
         my $result = $incdocs->{_api}->Fulfillment_Request_Status( $request->orderid );
+
+        if ( $result->{error} ) {
+            my $error_string = join ', ',
+                map { "IncDocs returned error: $_->{title} (status: $_->{status})" } @{ $result->{error} };
+            $request->append_to_note($error_string);
+            $request->status('ERROR')->store;
+            return {
+                error   => 0,
+                status  => '',
+                message => '',
+                method  => 'confirm',
+                stage   => 'commit',
+                next    => 'illview',
+                value   => {}
+            };
+        }
+
         $result->{illrequest_id}  = $request->illrequest_id;
         $result->{request_status} = $request->status;
 

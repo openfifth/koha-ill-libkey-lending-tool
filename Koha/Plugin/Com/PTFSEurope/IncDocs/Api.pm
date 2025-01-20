@@ -175,6 +175,13 @@ sub Fulfillment_Request_Status {
             status  => 200,
             openapi => $response->{data}
         );
+    } elsif ( $response->{error} ) {
+        return $c->render(
+            status  => 400,
+            openapi => {
+                error => $response->{error},
+            }
+        );
     } else {
         return $c->render(
             status  => 400,
@@ -215,7 +222,12 @@ sub _make_request {
 
     if ( $response->code != 200 ) {
         return {
-            data => $response->decoded_content,
+            error => [
+                {
+                    status => $response->code,
+                    title  => $response->message,
+                }
+            ],
         };
     }
 
