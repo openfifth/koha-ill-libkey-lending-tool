@@ -108,7 +108,7 @@ sub Backend_Availability {
     # Need to better ascertain availability here.
     # i.e.Is an article available if openAccess = 1 regardless of illLibraryName?
 
-    if ( $response && $response->{data}->{illLibraryName} ) {
+    if ( $response && ref $response->{data} eq 'HASH' && $response->{data}->{illLibraryName} ) {
         return $c->render(
             status  => 200,
             openapi => {
@@ -116,7 +116,7 @@ sub Backend_Availability {
                 success  => "",
             }
         );
-    } elsif ( $response && !$response->{data}->{illLibraryName} ) {
+    } elsif ( $response && ref $response->{data} eq 'HASH' && !$response->{data}->{illLibraryName} ) {
         return $c->render(
             status  => 404,
             openapi => {
@@ -212,6 +212,12 @@ sub _make_request {
     }
     my $ua       = LWP::UserAgent->new;
     my $response = $ua->request($request);
+
+    if ( $response->code != 200 ) {
+        return {
+            data => $response->decoded_content,
+        };
+    }
 
     return decode_json( $response->decoded_content );
 }
