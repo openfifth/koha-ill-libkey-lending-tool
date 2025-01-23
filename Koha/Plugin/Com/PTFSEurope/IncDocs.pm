@@ -37,13 +37,13 @@ use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
-our $VERSION = "1.2.2";
+our $VERSION = "1.2.3";
 
 our $metadata = {
     name            => 'IncDocs',
     author          => 'PTFS-Europe',
     date_authored   => '2024-11-18',
-    date_updated    => "2025-01-20",
+    date_updated    => "2025-01-23",
     minimum_version => '25.05.00.000',
     maximum_version => undef,
     version         => $VERSION,
@@ -1755,6 +1755,11 @@ sub status {
             };
         }
 
+        my $lenderLibraryName =
+              $request->extended_attributes->find( { type => 'lenderLibraryName' } )
+            ? $request->extended_attributes->find( { type => 'lenderLibraryName' } )->value
+            : undef;
+        $result->{lenderLibraryName} = $lenderLibraryName;
         $result->{illrequest_id}  = $request->illrequest_id;
         $result->{request_status} = $request->status;
 
@@ -1771,8 +1776,12 @@ sub status {
             $request->status('COMP');
         } elsif ( $result->{status} eq 'declined' ) {
             $request->status('REQREV');
-            $request->append_to_note(
-                'IncDocs library ID ' . $result->{lenderLibraryId} . ' decline reason: ' . $result->{declinedReason} );
+            my $note = "IncDocs library ID $result->{lenderLibraryId}";
+            if (defined $result->{lenderLibraryName}) {
+                $note .= " ($result->{lenderLibraryName})";
+            }
+            $note .= " decline reason: $result->{declinedReason}";
+            $request->append_to_note($note);
 
             my $declined_lenderLibraryId_list =
                 $params->{request}->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } );
