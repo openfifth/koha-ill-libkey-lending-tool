@@ -37,13 +37,13 @@ use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
-our $VERSION = "1.2.3";
+our $VERSION = "1.3.0";
 
 our $metadata = {
     name            => 'IncDocs',
     author          => 'PTFS-Europe',
     date_authored   => '2024-11-18',
-    date_updated    => "2025-01-23",
+    date_updated    => "2025-03-25",
     minimum_version => '25.05.00.000',
     maximum_version => undef,
     version         => $VERSION,
