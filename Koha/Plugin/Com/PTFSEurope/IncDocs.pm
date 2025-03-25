@@ -659,9 +659,9 @@ sub create_illrequestattributes {
     # Get the canonical list of metadata fields
     my $fields = $self->fieldmap;
 
-    # Get any existing illrequestattributes for this request,
+    # Get any existing extended_attributes for this request,
     # so we can avoid trying to create duplicates
-    my $existing_attrs = $request->illrequestattributes->unblessed;
+    my $existing_attrs = $request->extended_attributes->unblessed;
     my $existing_hash  = {};
     foreach my $a ( @{$existing_attrs} ) {
         $existing_hash->{ lc $a->{type} } = $a->{value};
