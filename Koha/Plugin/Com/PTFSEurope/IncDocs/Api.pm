@@ -153,6 +153,13 @@ sub Create_Fulfillment_Request {
                 error => $response->{errors},
             }
         );
+    } elsif ( $response->{error} ) {
+        return $c->render(
+            status  => 400,
+            openapi => {
+                error => $response->{error},
+            }
+        );
     } else {
         return $c->render(
             status  => 400,
@@ -220,7 +227,7 @@ sub _make_request {
     my $ua       = LWP::UserAgent->new;
     my $response = $ua->request($request);
 
-    if ( $response->code != 200 ) {
+    if ( $response->code == 404 ) {
         return {
             error => [
                 {

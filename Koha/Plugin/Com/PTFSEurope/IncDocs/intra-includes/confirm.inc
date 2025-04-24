@@ -29,7 +29,7 @@
                 <li>
                     <a href="/cgi-bin/koha/ill/ill-requests.pl?op=illview&amp;illrequest_id=[% whole.illrequest_id %]">Return to request</a>
                 </li>
-            [% IF incdocsRsp %]
+            [% IF incdocsRsp && !whole.backend_availability.error %]
                 <h3>IncDocs availability response details:</h2>
                 [% FOREACH item IN incdocsRsp %]
                     <tr>
