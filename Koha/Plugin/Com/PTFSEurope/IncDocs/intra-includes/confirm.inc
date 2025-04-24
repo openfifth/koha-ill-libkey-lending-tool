@@ -12,8 +12,11 @@
                 <h3 class="text-success">
                     This item is available
                     [% IF whole.fresh_library %] at a different library [% END %]
+                    [% IF whole.found_locally %] locally (at the requesting library) [% END %]
                 </h3>
-                <h3 class="text-success">[% whole.backend_availability.success %]</h2>
+                    [% IF ( whole.found_locally ) %]
+                        <p style="margin-left: 0;">This article was found locally and will not be placed with IncDocs, the article link will be directly sent to the patron instead.</p>
+                    [% END %]
                     [% SET get_params = "op=" _ whole.method _ "&stage=" _ whole.future _ "&illrequest_id=" _ whole.illrequest_id %]
                     [% FOREACH key IN incdocsRsp.keys %]
                         [% value = incdocsRsp.$key %]
@@ -23,7 +26,11 @@
                         [% END %]
                     [% END %]
                     <li>
-                        <a class="btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?[% get_params %]">Place request with IncDocs</a>
+                        [% IF ( whole.found_locally ) %]
+                            <a class="btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?[% get_params %]">Send article email to patron</a>
+                        [% ELSE %]
+                            <a class="btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?[% get_params %]">Place request with IncDocs</a>
+                        [% END %]
                     </li>
             [% END %]
                 <li>

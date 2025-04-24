@@ -29,6 +29,7 @@ use CGI;
 
 use JSON qw( encode_json decode_json to_json );
 use C4::Installer;
+use C4::Letters;
 
 use Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API;
 use Koha::AdditionalFields;
@@ -174,7 +175,8 @@ sub new_ill_backend {
     $self->{templates} = {
         'INCDOCS_MIGRATE_IN'     => $log_tt_dir . 'incdocs_migrate_in.tt',
         'INCDOCS_STATUS_CHECK'   => $log_tt_dir . 'incdocs_status_check.tt',
-        'INCDOCS_REQUEST_PLACED' => $log_tt_dir . 'incdocs_request_placed.tt'
+        'INCDOCS_REQUEST_PLACED' => $log_tt_dir . 'incdocs_request_placed.tt',
+        'INCDOCS_FOUND_LOCALLY'  => $log_tt_dir . 'incdocs_found_locally.tt'
     };
     $self->{_logger} = $params->{logger} if ( $params->{logger} );
 
@@ -791,6 +793,136 @@ sub create_request {
     }
 
     $self->create_illrequestattributes( $request, $submission->{other} );
+
+    if ( !$submission->{other}->{lenderLibraryId} ) {
+        my $letter_code = $config->{requesting_library_email_template};
+
+        unless ($letter_code){
+            my $empty_error_message = "Error: IncDocs configured email template must be set";
+            $request->append_to_note($empty_error_message);
+            $request->status('ERROR')->store;
+            return {
+                error         => 1,
+                status        => '',
+                message       => $empty_error_message,
+                method        => 'confirm',
+                stage         => 'availability',
+                illrequest_id => $request->illrequest_id,
+            } unless $letter_code;
+        }
+
+        my $letter;
+        eval {
+            $letter = $request->get_notice(
+                {
+                    notice_code => $letter_code,
+                    transport   => 'email'
+                }
+            );
+        };
+
+        my $patron_not_found = "Error: A patron must be associated with this request for an email to be sent";
+        unless ($patron) {
+            $request->append_to_note($patron_not_found);
+            $request->status('ERROR')->store;
+            return {
+                error         => 1,
+                status        => '',
+                message       => $patron_not_found,
+                method        => 'confirm',
+                stage         => 'availability',
+                illrequest_id => $request->illrequest_id,
+            };
+        }
+
+        if ($@) {
+            my $error_message = "Error: Sending email to patron: $@";
+            $request->append_to_note($error_message);
+            $request->status('ERROR')->store;
+
+            return {
+                error         => 1,
+                status        => '',
+                message       => $error_message,
+                method        => 'confirm',
+                stage         => 'availability',
+                illrequest_id => $request->illrequest_id,
+            };
+        }
+
+        my $patron_email_not_found = "Error: The patron's email address could not be found";
+        unless ($requesterEmail) {
+            $request->append_to_note($patron_email_not_found);
+            $request->status('ERROR')->store;
+            return {
+                error         => 1,
+                status        => '',
+                message       => $patron_email_not_found,
+                method        => 'confirm',
+                stage         => 'availability',
+                illrequest_id => $request->illrequest_id,
+            };
+        }
+
+        my $from_library_address = $library->branchillemail
+            || $library->branchemail;
+        my $library_email_not_found = "Error: The library's email address could not be found";
+        unless ($from_library_address) {
+            $request->append_to_note($library_email_not_found);
+            $request->status('ERROR')->store;
+            return {
+                error         => 1,
+                status        => '',
+                message       => $library_email_not_found,
+                method        => 'confirm',
+                stage         => 'availability',
+                illrequest_id => $request->illrequest_id,
+            };
+        }
+
+        my $enqueue_letter = C4::Letters::EnqueueLetter(
+            {
+                letter                 => $letter,
+                from_address           => $from_library_address,
+                reply_address          => $from_library_address,
+                to_address             => $requesterEmail,
+                message_transport_type => 'email',
+            }
+        );
+
+        my $logger = Koha::ILL::Request::Logger->new;
+        $logger->log_patron_notice(
+            {
+                request     => $request,
+                notice_code => $letter_code
+            }
+        );
+
+        $request->status('COMP');
+        $request->accessurl($submission->{other}->{contentLocation});
+        $request->store;
+
+        # Log the outcome
+        $self->log_request_outcome(
+            {
+                outcome => 'INCDOCS_FOUND_LOCALLY',
+                request => $request,
+                message => $requesterLibraryId
+            }
+        );
+
+        $self->create_illrequestattributes( $request, {lenderLibraryId => $requesterLibraryId} );
+
+        return {
+            error   => 0,
+            status  => '',
+            message => '',
+            method => 'confirm',
+            stage   => 'commit',
+            next    => 'illview',
+            value   => {}
+        };
+    }
 
     # Make the request with IncDocs Lending Tool via the koha-plugin-IncDocs API
     my $result = $incdocs_api->Create_Fulfillment_Request(
@@ -1421,6 +1553,20 @@ sub fieldmap {
             no_submit => 1,
             position  => 99
         },
+        contentLocation => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Content location",
+            no_submit => 1,
+            position  => 99
+        },
+        fullTextFile => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Full text file",
+            no_submit => 1,
+            position  => 99
+        },
         lenderLibraryName => {
             type      => "string",
             exclude   => 1,
@@ -1688,12 +1834,14 @@ sub availability {
 
     if (
         $response->{backend_availability}->{error}
-        && (   $response->{backend_availability}->{error} eq 'Not found at any library'
+        && (   $response->{backend_availability}->{error} eq 'Provided doi or pubmedid is not available in IncDocs'
             || $response->{backend_availability}->{error} eq 'Not found at any different library' )
         )
     {
         $request->status('UNAVAILABLE')->store if ( $request->status ne 'UNAVAILABLE' );
     }
+
+    $response->{found_locally} = 1 unless $result->{response}->{data}->{illLibraryId};
 
     return $response;
 }
@@ -1844,7 +1992,7 @@ sub unmediated_confirm {
     $params->{other} = incdocs_api_response_to_request( $params->{other} );
 
     if (   $availability->{backend_availability}->{error}
-        && $availability->{backend_availability}->{error} eq 'Not found at any library' )
+        && $availability->{backend_availability}->{error} eq 'Provided doi or pubmedid is not available in IncDocs' )
     {
         my $request = Koha::ILL::Requests->find( $availability->{illrequest_id} );
         $request->status('UNAVAILABLE')->store if ( $request->status ne 'UNAVAILABLE' );

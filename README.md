@@ -30,3 +30,8 @@ This plugin requires [bug 38663](https://bugs.koha-community.org/bugzilla3/show_
 
 ## IncDocs status update cron example (update every 30 minutes)
 See [crontab.example](Koha/Plugin/Com/PTFSEurope/IncDocs/cron/crontab.example) for a working example in k-t-d (needs adjusting for a live environment)
+
+## Email template notice example for 'found locally' articles.
+This is used to send an email to the patron with the link to the article.
+See [notice.example](Koha/Plugin/Com/PTFSEurope/IncDocs/docs/notice.example).
+This template notice must be created as an HTML message.

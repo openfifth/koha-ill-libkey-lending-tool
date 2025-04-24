@@ -58,6 +58,16 @@
                             </li>
                         </ol>
                     </div>
+                    <legend>Email template notices</legend>
+                    <div class="row">
+                        <ol>
+                            <li>
+                                <label for="incdocs_requesting_library_email_template_input">Template notice to use when article is found locally: </label>
+                                <input id="incdocs_requesting_library_email_template_input" class="required_input" placeholder="Enter template notice code" type="text" name="requesting_library_email_template" value="[% config.requesting_library_email_template | html %]" size="35">
+                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The template notice code e.g. 'ILL_PARTNER_REQ'"><i class="fa-solid fa-circle-question"></i></a>
+                            </li>
+                        </ol>
+                    </div>
                     <input type="hidden" name="save" value="1" />
                     <input class="btn btn-primary" id="submit_button" type="submit" value="Save configuration" />
                 </fieldset>

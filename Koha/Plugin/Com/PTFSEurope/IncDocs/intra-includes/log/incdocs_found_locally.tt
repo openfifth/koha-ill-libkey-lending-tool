@@ -1,0 +1,4 @@
+[% PROCESS 'ill-request-log.inc' %]
+[% WRAPPER ill_request_log action_label = 'IncDocs article found locally' %]
+    At requesting library: [% log.info.response %]
+[% END %]

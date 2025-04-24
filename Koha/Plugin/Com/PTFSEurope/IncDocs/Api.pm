@@ -104,31 +104,29 @@ sub Backend_Availability {
     my $response =
         _make_request( 'GET', 'libraries/' . $incdocs_id->value . '/articles/' . $id_code . '/' . $id_value );
 
-    # TODO:
-    # Need to better ascertain availability here.
-    # i.e.Is an article available if openAccess = 1 regardless of illLibraryName?
+    if ( $response->{error} && grep { $_->{status} == 404 } @{ $response->{error} } ) {
+        return $c->render(
+            status  => 404,
+            openapi => {
+                error => 'Provided doi or pubmedid is not available in IncDocs',
+            }
+        );
+    }
 
     if ( $response && ref $response->{data} eq 'HASH' && $response->{data}->{illLibraryName} ) {
         return $c->render(
             status  => 200,
             openapi => {
                 response => $response,
-                success  => "",
+                success  => "Found at another library",
             }
         );
     } elsif ( $response && ref $response->{data} eq 'HASH' && !$response->{data}->{illLibraryName} ) {
         return $c->render(
-            status  => 404,
+            status  => 200,
             openapi => {
                 response => $response,
-                error    => "Not found at any library",
-            }
-        );
-    } else {
-        return $c->render(
-            status  => 404,
-            openapi => {
-                error => 'Provided doi or pubmedid is not available in IncDocs',
+                success  => "Found locally",
             }
         );
     }
