@@ -24,9 +24,9 @@ Only compatible with Koha 25.05+
 
 This plugin requires [bug 38663](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=38663)
 
-## Documentation
+## Libkey Lending Tool Documentation
 
 * [https://thirdiron.atlassian.net/wiki/spaces/BrowZineAPIDocs/pages/3550019585/LibKey+Lending+Tool+API+Documentation](https://thirdiron.atlassian.net/wiki/spaces/BrowZineAPIDocs/pages/3550019585/LibKey+Lending+Tool+API+Documentation).
 
 ## IncDocs status update cron example (update every 30 minutes)
-See Koha/Plugin/Com/PTFSEurope/IncDocs/cron/crontab.example for a working example in k-t-d (needs adjusting for a live environment)
+See [crontab.example](Koha/Plugin/Com/PTFSEurope/IncDocs/cron/crontab.example) for a working example in k-t-d (needs adjusting for a live environment)
