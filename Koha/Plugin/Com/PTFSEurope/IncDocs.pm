@@ -1836,6 +1836,8 @@ and placing the fulfilment request directly.
 sub unmediated_confirm {
     my ( $self, $params ) = @_;
 
+    return if $params->{other}->{opac};
+
     my $availability = $self->availability($params);
 
     $params->{other} = { %{ $availability->{backend_availability}->{response}->{data} }, %{ $params->{other} } };

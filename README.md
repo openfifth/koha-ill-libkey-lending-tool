@@ -11,6 +11,7 @@ This backend provides the ability to create Interlibrary Loan requests using the
 This backend utilizes the ILLModuleUnmediated system preference.
 If enabled, requests are placed with IncDocs as soon as they're created and are set to "Requested" status.
 Otherwise, requests are created with the "New" status and manual confirmation to place the request with IncDocs is required.
+This is only true for Staff created requests. Requests created from the OPAC always require mediation.
 
 ### IllLog
 
