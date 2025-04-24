@@ -635,14 +635,7 @@ sub create_submission {
     # Now store the core equivalents
     $self->create_illrequestattributes( $request, $params->{other}, 1 );
 
-    if ($unauthenticated_request) {
-        my $unauthenticated_notes_text =
-              "Unauthenticated request.\nFirst name: $params->{other}->{'unauthenticated_first_name'}"
-            . ".\nLast name: $params->{other}->{'unauthenticated_last_name'}."
-            . "\nEmail: $params->{other}->{'unauthenticated_email'}.";
-        $request->append_to_note($unauthenticated_notes_text);
-        $request->notesopac($unauthenticated_notes_text)->store;
-    }
+    $request->add_unauthenticated_data( $params->{other} ) if $unauthenticated_request;
 
     return $request;
 }
