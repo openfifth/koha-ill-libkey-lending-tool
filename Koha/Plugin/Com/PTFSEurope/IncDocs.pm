@@ -1021,7 +1021,7 @@ sub status_graph {
             name           => 'Request error',
             ui_method_name => 0,
             method         => 0,
-            next_actions   => [ 'COMP', 'EDITITEM', 'MIG', 'KILL' ],
+            next_actions   => [ 'REQ', 'COMP', 'EDITITEM', 'MIG', 'KILL' ],
             ui_method_icon => 0,
         },
         STAT => {
@@ -1046,7 +1046,7 @@ sub status_graph {
         # Override REQ so we can rename the button
         # Talk about a sledgehammer to crack a nut
         REQ => {
-            prev_actions   => [ 'NEW', 'QUEUED', 'CANCREQ', 'REQREV' ],
+            prev_actions   => [ 'NEW', 'QUEUED', 'CANCREQ', 'REQREV', 'ERROR' ],
             id             => 'REQ',
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs',
