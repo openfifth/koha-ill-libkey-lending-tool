@@ -4,6 +4,8 @@ This backend provides the ability to create Interlibrary Loan requests using the
 
 ![workflow diagram](https://github.com/PTFS-Europe/koha-ill-libkey-lending-tool/blob/main/incdocs_workflow.png?raw=true)
 
+This plugin is designed to only work with AutoILLBackendPriority.
+
 ## System preferences
 
 ### ILLModuleUnmediated
