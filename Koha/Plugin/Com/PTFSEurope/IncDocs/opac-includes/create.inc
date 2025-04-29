@@ -13,6 +13,10 @@
     <p><em>Please Note:</em> The branch you chose is invalid.</p>
   [% ELSIF whole.status == 'invalid_metadata' %]
     <p><em>Please Note:</em> You did not supply the correct metadata for the selected material type.</p>
+  [% ELSIF whole.status == 'missing_unauth_data' %]
+    <p><em>Please Note:</em> Patron data (first name, last name and e-mail) are mandatory fields.</p>
+  [% ELSIF whole.status == 'failed_captcha' %]
+    <p><em>Please Note:</em> You typed in the wrong characters in the box before submitting. Please try again.</p>
   [% ELSIF whole.status == 'api' %]
     <p><em>Please Note:</em> there was an error whilst communicating with the remote service.</p>
   [% ELSIF whole.message %]

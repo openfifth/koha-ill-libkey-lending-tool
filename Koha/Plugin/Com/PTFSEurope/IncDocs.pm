@@ -33,6 +33,7 @@ use C4::Letters;
 
 use Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API;
 use Koha::AdditionalFields;
+use Koha::ILL::Request;
 use Koha::ILL::Requests;
 use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
@@ -269,6 +270,18 @@ sub create {
     # Validate form and perform search if valid
     elsif ( $stage eq 'validate' || $stage eq 'form' ) {
 
+        my $unauthenticated_request =
+            C4::Context->preference("ILLOpacUnauthenticatedRequest") && !$other->{'cardnumber'};
+        if ($unauthenticated_request) {
+            my $unauth_request_error = Koha::ILL::Request::unauth_request_data_error($other);
+            if ($unauth_request_error) {
+                $response->{status} = $unauth_request_error;
+                $response->{error}  = 1;
+                $response->{stage}  = 'init';
+                $response->{value}  = $params;
+                return $response;
+            }
+        }
         if ( _fail( $other->{'branchcode'} ) ) {
 
             # Pass the map of form fields in forms that can be used by TT
