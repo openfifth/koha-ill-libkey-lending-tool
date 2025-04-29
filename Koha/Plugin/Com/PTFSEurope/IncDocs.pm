@@ -1081,7 +1081,7 @@ sub backend_metadata {
     my $metadata_keyed_on_prop = {};
 
     while ( my $attr = $attrs->next ) {
-        if ( $fields->{ $attr->type } ) {
+        if ( $fields->{ $attr->type } && !$fields->{ $attr->type }->{hide} ) {
             my $label = $fields->{ $attr->type }->{label};
             $metadata->{$label} = $attr->value;
             $metadata_keyed_on_prop->{ $attr->type } = $attr->value;
@@ -1657,7 +1657,31 @@ sub fieldmap {
             no_submit => 1,
             hide      => 1,
             position  => 99
-        }
+        },
+        unauthenticated_first_name => {
+            type      => "string",
+            exclude   => 1,
+            label     => "unauthenticated first name",
+            no_submit => 1,
+            hide      => 1,
+            position  => 99
+        },
+        unauthenticated_last_name => {
+            type      => "string",
+            exclude   => 1,
+            label     => "unauthenticated last name",
+            no_submit => 1,
+            hide      => 1,
+            position  => 99
+        },
+        unauthenticated_email => {
+            type      => "string",
+            exclude   => 1,
+            label     => "unauthenticated email",
+            no_submit => 1,
+            hide      => 1,
+            position  => 99
+        },
     };
 }
 
