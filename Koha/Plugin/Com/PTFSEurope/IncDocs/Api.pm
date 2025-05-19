@@ -100,7 +100,7 @@ sub Backend_Availability {
     }
 
     my $id_code  = $metadata->{doi} ? 'doi'            : 'pmid';
-    my $id_value = $metadata->{doi} ? $metadata->{doi} : $metadata->{pubmedid};
+    my $id_value = $metadata->{doi} ? $metadata->{doi} =~ s/^\s+|\s+$//gr : $metadata->{pubmedid} =~ s/^\s+|\s+$//gr;
     my $response =
         _make_request( 'GET', 'libraries/' . $incdocs_id->value . '/articles/' . $id_code . '/' . $id_value );
 
