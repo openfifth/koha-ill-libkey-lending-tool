@@ -101,6 +101,11 @@ sub Backend_Availability {
 
     my $id_code  = $metadata->{doi} ? 'doi'            : 'pmid';
     my $id_value = $metadata->{doi} ? $metadata->{doi} =~ s/^\s+|\s+$//gr : $metadata->{pubmedid} =~ s/^\s+|\s+$//gr;
+
+    if ( $id_code eq 'doi' ) {
+        $id_value =~ s/.*?(?=10\.)//;
+    }
+
     my $response =
         _make_request( 'GET', 'libraries/' . $incdocs_id->value . '/articles/' . $id_code . '/' . $id_value );
 
