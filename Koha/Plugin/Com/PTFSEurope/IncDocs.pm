@@ -1151,6 +1151,15 @@ sub _can_create_request {
 
 sub status_graph {
     return {
+        NEW => {
+            prev_actions => [ ],
+            id             => 'NEW',
+            name           => 'New request',
+            ui_method_name => 'New request',
+            method         => 'create',
+            next_actions   => [ 'REQ', 'EDITITEM', 'MIG', 'KILL' ],
+            ui_method_icon => 'fa-plus',
+        },
         EDITITEM => {
             prev_actions   => [ 'NEW', 'UNAVAILABLE', 'UNAUTH' ],
             id             => 'EDITITEM',
