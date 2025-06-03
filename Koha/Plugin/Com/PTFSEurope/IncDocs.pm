@@ -807,7 +807,7 @@ sub create_request {
 
     $self->create_illrequestattributes( $request, $submission->{other} );
 
-    if ( !$submission->{other}->{lenderLibraryId} ) {
+    if ( !$submission->{other}->{lenderLibraryId} && $submission->{other}->{contentLocation} ) {
         my $letter_code = $config->{requesting_library_email_template};
 
         unless ($letter_code){

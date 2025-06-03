@@ -109,7 +109,9 @@ sub Backend_Availability {
     my $response =
         _make_request( 'GET', 'libraries/' . $incdocs_id->value . '/articles/' . $id_code . '/' . $id_value );
 
-    if ( $response->{error} && grep { $_->{status} == 404 } @{ $response->{error} } ) {
+    if ( ( $response->{error} && grep { $_->{status} == 404 } @{ $response->{error} } ) ||
+        ( !$response->{data}->{illLibraryName} && !$response->{data}->{contentLocation} )
+    ) {
         return $c->render(
             status  => 404,
             openapi => {
@@ -126,7 +128,7 @@ sub Backend_Availability {
                 success  => "Found at another library",
             }
         );
-    } elsif ( $response && ref $response->{data} eq 'HASH' && !$response->{data}->{illLibraryName} ) {
+    } elsif ( $response && ref $response->{data} eq 'HASH' && !$response->{data}->{illLibraryName} && $response->{data}->{contentLocation} ) {
         return $c->render(
             status  => 200,
             openapi => {
