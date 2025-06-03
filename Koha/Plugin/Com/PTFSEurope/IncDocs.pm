@@ -39,13 +39,13 @@ use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
-our $VERSION = "2.0.3";
+our $VERSION = "2.1.0";
 
 our $metadata = {
     name            => 'IncDocs',
     author          => 'Open Fifth',
     date_authored   => '2024-11-18',
-    date_updated    => "2025-05-19",
+    date_updated    => "2025-06-03",
     minimum_version => '25.05.00.000',
     maximum_version => undef,
     version         => $VERSION,
