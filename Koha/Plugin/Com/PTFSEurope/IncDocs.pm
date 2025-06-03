@@ -965,6 +965,22 @@ sub create_request {
         };
     }
 
+    if ( $result->{errors} ) {
+        my $error_string = join ', ',
+            map { "IncDocs returned error: $_->{message} (path: $_->{path})" } @{ $result->{errors} };
+        $request->append_to_note($error_string);
+        $request->status('ERROR')->store;
+        return {
+            error   => 0,
+            status  => '',
+            message => '',
+            method  => 'confirm',
+            stage   => 'commit',
+            next    => 'illview',
+            value   => {}
+        };
+    }
+
     $result->{incdocs_type} = delete $result->{type};
     $result->{type}         = 'article';
     $result->{incdocs_id}   = delete $result->{id};
