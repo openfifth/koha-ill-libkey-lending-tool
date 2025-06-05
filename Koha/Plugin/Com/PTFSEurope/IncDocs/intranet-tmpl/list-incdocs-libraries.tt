@@ -30,8 +30,15 @@
                                   [% ELSE %]
                                     <td>N/A</td>
                                   [% END %]
-                                  [% IF library.library %]
-                                    <td><strong><a href="/cgi-bin/koha/admin/branches.pl?op=view&amp;branchcode=[% library.library.branchcode %]">[% library.library.branchname %]</a></strong></td>
+                                  [% IF library.koha_libraries.size > 0 %]
+                                    <td>
+                                    [% FOREACH koha_library IN library.koha_libraries %]
+                                      [% IF loop.index > 0 %]
+                                        <br />
+                                      [% END %]
+                                      <strong><a href="/cgi-bin/koha/admin/branches.pl?op=view&amp;branchcode=[% koha_library.branchcode %]">[% koha_library.branchname %]</a></strong>
+                                    [% END %]
+                                    </td>
                                   [% ELSE %]
                                     <td>N/A</td>
                                   [% END %]

@@ -1817,21 +1817,25 @@ sub list_incdocs_libraries {
             { name => $self->{config}->{library_libraryidfield}, tablename => 'branches' } )->next;
 
         if ($additional_field) {
-            my $library = Koha::Libraries->filter_by_additional_fields(
+            my @koha_libraries = Koha::Libraries->filter_by_additional_fields(
                 [
                     {
                         id    => $additional_field->id,
                         value => $incdocs_library->{id},
                     },
                 ]
-            )->next;
-            $incdocs_library->{library} = $library;
+            )->as_list;
+
+            $incdocs_library->{koha_libraries} = \@koha_libraries;
         }
     }
 
-    @$libraries = sort { ( $b->{library} // $b->{patron} ) <=> ( $a->{library} // $a->{patron} ) } @$libraries;
+    my @sorted_libraries = sort {
+        ( scalar @{ $b->{koha_libraries} } > 0 ) <=> ( scalar @{ $a->{koha_libraries} } > 0 )
+            || lc( $a->{name} ) cmp lc( $b->{name} )
+    } @$libraries;
 
-    $template->param( 'libraries' => $libraries );
+    $template->param( 'libraries' => \@sorted_libraries );
     $self->output_html( $template->output() );
 }
 
