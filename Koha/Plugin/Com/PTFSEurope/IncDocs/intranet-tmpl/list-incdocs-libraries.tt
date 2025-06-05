@@ -16,7 +16,6 @@
                           <tr>
                               <th>IncDocs ID</th>
                               <th>IncDocs Name</th>
-                              <th>Koha patron record</th>
                               <th>Koha library record</th>
                           </tr>
                       </thead>
@@ -25,11 +24,6 @@
                               <tr>
                                   <td>[% library.id %]</td>
                                   <td>[% library.name %]</td>
-                                  [% IF library.patron %]
-                                    <td><strong>[%- INCLUDE 'patron-title.inc' patron => library.patron hide_patron_infos_if_needed => 1 -%]</strong></td>
-                                  [% ELSE %]
-                                    <td>N/A</td>
-                                  [% END %]
                                   [% IF library.koha_libraries.size > 0 %]
                                     <td>
                                     [% FOREACH koha_library IN library.koha_libraries %]

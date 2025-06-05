@@ -1776,8 +1776,7 @@ sub list_incdocs_libraries {
 
     if (   !$self->{config}->{access_token}
         || !$self->{config}->{library_group}
-        || !$self->{config}->{library_libraryidfield}
-        || !$self->{config}->{patron_libraryidfield} )
+        || !$self->{config}->{library_libraryidfield} )
     {
         $template->param( 'error' => 'Configuration invalid or incomplete' );
         $self->output_html( $template->output() );
@@ -1798,20 +1797,6 @@ sub list_incdocs_libraries {
 
     # iterate on libraries
     foreach my $incdocs_library (@$libraries) {
-        my $patron = Koha::Patrons->search(
-            [
-                {
-                    'extended_attributes.attribute' => { '=' => $incdocs_library->{id} },
-                    'extended_attributes.code'      => $self->{config}->{patron_libraryidfield}
-                },
-            ],
-            { 'prefetch' => ['extended_attributes'] }
-        )->last;
-
-        if ($patron) {
-            $incdocs_library->{patron} = $patron;
-        }
-
         my $additional_field =
             Koha::AdditionalFields->search(
             { name => $self->{config}->{library_libraryidfield}, tablename => 'branches' } )->next;

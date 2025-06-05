@@ -47,11 +47,6 @@
                     <div class="row">
                         <ol>
                             <li>
-                                <label for="incdocs_patron_libraryidfield_input"><strong>IncDocs Library ID</strong> field for patron records: </label>
-                                <input id="incdocs_patron_libraryidfield_input" class="required_input" placeholder="Enter patron attribute code" type="text" name="patron_libraryidfield" value="[% config.patron_libraryidfield | html %]" size="35">
-                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The Koha patron attribute type code used to match the patron record with the IncDocs library id field."><i class="fa-solid fa-circle-question"></i></a>
-                            </li>
-                            <li>
                                 <label for="incdocs_library_libraryidfield_input"><strong>IncDocs Library ID</strong> field for library records: </label>
                                 <input id="incdocs_library_libraryidfield_input" class="required_input" placeholder="Enter library additional field code" type="text" name="library_libraryidfield" value="[% config.library_libraryidfield | html %]" size="35">
                                 <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The Koha library additional field code used to match the library record with the IncDocs library id field."><i class="fa-solid fa-circle-question"></i></a>
