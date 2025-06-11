@@ -44,10 +44,20 @@
                     <td style="padding: 5px">
                     [% IF item.value.size > 1 %]
                         [% FOREACH subitem IN item.value %]
-                            <strong>[% subitem.key %]</strong> : [% subitem.value %]<br>
+                            <strong>[% subitem.key %]</strong> :
+                            [% IF subitem.value.match('^http') %]
+                                <a target="_blank" href="[% subitem.value | url %]">[% subitem.value %]</a>
+                            [% ELSE %]
+                                [% subitem.value %]
+                            [% END %]
+                            <br>
                         [% END %]
                     [% ELSE %]
+                      [% IF item.value.match('^http') %]
+                          <a target="_blank" href="[% item.value | url %]">[% item.value %]</a>
+                      [% ELSE %]
                         [% item.value %]
+                      [% END %]
                     [% END %]
                     </tr>
                 [% END %]
