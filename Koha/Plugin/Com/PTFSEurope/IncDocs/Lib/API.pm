@@ -93,7 +93,7 @@ sub Backend_Availability {
 
     my $request = HTTP::Request->new(
         'GET',
-        $self->{baseurl} . "/ill_backend_availability_incdocs?metadata=" . $params->{metadata}
+        $self->{baseurl} . "/ill_backend_availability_incdocs?metadata=" . $params->{metadata} . ($params->{forceIll} ? "&forceIll=" . $params->{forceIll} : "")
     );
 
     return decode_json( $self->{ua}->request($request)->decoded_content );

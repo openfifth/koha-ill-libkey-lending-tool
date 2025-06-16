@@ -107,7 +107,12 @@ sub Backend_Availability {
     }
 
     my $response =
-        _make_request( 'GET', 'libraries/' . $incdocs_id->value . '/articles/' . $id_code . '/' . $id_value );
+        _make_request(
+            'GET',
+            'libraries/' . $incdocs_id->value . '/articles/' . $id_code . '/' . $id_value,
+            undef,
+            $c->validation->param('forceIll')
+        );
 
     if ( ( $response->{error} && grep { $_->{status} == 404 } @{ $response->{error} } ) ||
         ( !$response->{data}->{illLibraryName} && !$response->{data}->{contentLocation} )
@@ -212,7 +217,7 @@ Authenticate before making the request.
 =cut
 
 sub _make_request {
-    my ( $method, $endpoint_url, $payload ) = @_;
+    my ( $method, $endpoint_url, $payload, $forceIll ) = @_;
 
     my $config = _get_plugin_config();
     return undef unless $config;
@@ -222,7 +227,13 @@ sub _make_request {
     my $library_group   = $config->{library_group};
 
     my $uri =
-        URI->new( $incdocs_api_url . '/' . $library_group . '/' . $endpoint_url . '?access_token=' . $access_token );
+        URI->new( $incdocs_api_url . '/'
+                . $library_group . '/'
+                . $endpoint_url
+                . '?access_token='
+                . $access_token
+                . ( $forceIll ? '&forceIllLibraryLookup=true' : '' )
+                );
 
     my $request = HTTP::Request->new( $method, $uri, undef, undef );
     if ($payload) {

@@ -1837,6 +1837,7 @@ sub availability {
     my $response = { method => "confirm", stage => "availability" };
 
     my $request = $params->{request};
+    my $forceIll = $params->{other}->{forceIll} // 0;
 
     my $incdocs =
         Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend( { logger => Koha::ILL::Request::Logger->new } );
@@ -1853,7 +1854,7 @@ sub availability {
 
     $metadata = Koha::ILL::Request::Workflow->new->prep_metadata($metadata);
 
-    my $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata } );
+    my $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata, forceIll => $forceIll } );
 
     if ( $request->status eq 'REQREV' ) {
         my $declined_lenderLibraryId_list =

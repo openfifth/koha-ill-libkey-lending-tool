@@ -30,6 +30,13 @@
                     "description": "The metadata to use for checking availability",
                     "required": true,
                     "type": "string"
+                },
+                {
+                    "name": "forceIll",
+                    "in": "query",
+                    "description": "Whether to force Ill or not",
+                    "required": false,
+                    "type": "boolean"
                 }
             ],
             "produces": [

@@ -15,7 +15,7 @@
                     [% IF whole.found_locally %] locally (at the requesting library) [% END %]
                 </h3>
                     [% IF ( whole.found_locally ) %]
-                        <p style="margin-left: 0;">This article was found locally and will not be placed with IncDocs, the article link will be directly sent to the patron instead.</p>
+                        <div>This article was found locally and will not be placed with IncDocs, the article link will be directly sent to the patron instead.</div>
                     [% END %]
                     [% SET get_params = "op=" _ whole.method _ "&stage=" _ whole.future _ "&illrequest_id=" _ whole.illrequest_id %]
                     [% FOREACH key IN incdocsRsp.keys %]
@@ -27,11 +27,23 @@
                     [% END %]
                     <li>
                         [% IF ( whole.found_locally ) %]
-                            <a class="btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?[% get_params %]">Send article email to patron</a>
+                            <a class="mb-2 btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?[% get_params %]">
+                                <i class="fa-solid fa-paper-plane"></i> Send article email to patron
+                            </a>
                         [% ELSE %]
-                            <a class="btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?[% get_params %]">Place request with IncDocs</a>
+                            <a class="btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?[% get_params %]">
+                                <i class="fa-solid fa-check"></i> Place request with IncDocs
+                            </a>
                         [% END %]
                     </li>
+                    [% IF ( whole.found_locally ) %]
+                        <div class="mt-2">Problem with the article link?</div>
+                        <li>
+                            <a class="mb-2 btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?[% "op=confirm&illrequest_id=" _ whole.illrequest_id _ "&forceIll=1" %]">
+                                <i class="fa-solid fa-repeat"></i> Force a new library request
+                            </a>
+                        </li>
+                    [% END %]
             [% END %]
                 <li>
                     <a href="/cgi-bin/koha/ill/ill-requests.pl?op=illview&amp;illrequest_id=[% whole.illrequest_id %]">Return to request</a>
