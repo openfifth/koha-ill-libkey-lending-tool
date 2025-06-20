@@ -1234,7 +1234,7 @@ sub status_graph {
             ui_method_icon => 'fa-check',
         },
         REQREV => {
-            prev_actions   => [ 'REQ', 'GENREQ' ],
+            prev_actions   => [ 'GENREQ' ],
             id             => 'REQREV',
             name           => 'Request declined',
             ui_method_name => 'Revert request',
