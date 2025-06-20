@@ -1866,7 +1866,7 @@ sub availability {
             while ( grep( { $result->{response}->{data}->{illLibraryId} eq $_ } @declined_lenderLibraryId_array )
                 && $api_calls < 15 )
             {
-                $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata } );
+                $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata, forceIll => $forceIll } );
                 $api_calls++;
             }
 
