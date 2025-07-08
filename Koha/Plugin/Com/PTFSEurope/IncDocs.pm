@@ -1136,12 +1136,7 @@ sub capabilities {
 
         provides_backend_availability_check => sub { return 1; },
 
-        provides_batch_requests => sub { return 1; },
-
         unmediated_ill => sub { $self->unmediated_confirm(@_); },
-
-        # We can create ILL requests with data passed from the API
-        create_api => sub { $self->create_api(@_) },
 
         opac_unauthenticated_ill_requests => sub { return 1; }
     };
@@ -1352,43 +1347,6 @@ sub _openurl_to_incdocs {
     }
     $params->{other} = $return;
     return $params;
-}
-
-=head3 create_api
-
-Create a local submission from data supplied via an
-API call
-
-=cut
-
-sub create_api {
-    my ( $self, $body, $request ) = @_;
-
-    # We are receiving metadata in core schema, we need to
-    # translate to IncDocs Lending Tool schema before we can proceed
-    # We merge the supplied core metadata with the IncDocs Lending Tool
-    # equivalents
-    foreach my $attr ( @{ $body->{extended_attributes} } ) {
-        my $prop         = $attr->{type};
-        my $incdocs_prop = find_core_to_incdocs($prop);
-        if ($incdocs_prop) {
-            my @value = map { $_->{type} eq $incdocs_prop ? $_->{value} : () } @{ $body->{extended_attributes} };
-            $body->{$incdocs_prop} = $value[0];
-        }
-    }
-
-    # Create a submission from our metadata
-    # Mung things into the form create_submission expects
-    delete $body->{extended_attributes};
-
-    my $submission = $self->create_submission(
-        {
-            request => $request,
-            other   => $body
-        }
-    );
-
-    return $submission;
 }
 
 =head3 find_core_to_incdocs
