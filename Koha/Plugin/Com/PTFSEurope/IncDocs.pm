@@ -797,7 +797,6 @@ sub create_request {
     my $requesterLibraryId = $incdocs_id->value;
 
     my $patron = $request->borrowernumber ? Koha::Patrons->find( $request->borrowernumber ) : undef;
-    my $requesterEmail = $patron ? $patron->notice_email_address || $config->{payload_requesteremail} : $config->{payload_requesteremail};
 
     $submission->{other} = incdocs_api_response_to_request( $submission->{other} );
 
@@ -807,8 +806,13 @@ sub create_request {
 
     $self->create_illrequestattributes( $request, $submission->{other} );
 
+    my $requesterEmail;
     if ( !$submission->{other}->{lenderLibraryId} && $submission->{other}->{contentLocation} ) {
         my $letter_code = $config->{requesting_library_email_template};
+        $requesterEmail =
+              $patron
+            ? $patron->notice_email_address || $config->{payload_requesteremail}
+            : $config->{payload_requesteremail};
 
         unless ($letter_code){
             my $empty_error_message = "Error: IncDocs configured email template must be set";
@@ -936,6 +940,7 @@ sub create_request {
             value   => {}
         };
     }
+    $requesterEmail = $library ? $library->inbound_ill_address : $config->{payload_requesteremail};
 
     # Make the request with IncDocs Lending Tool via the koha-plugin-IncDocs API
     my $result = $incdocs_api->Create_Fulfillment_Request(
