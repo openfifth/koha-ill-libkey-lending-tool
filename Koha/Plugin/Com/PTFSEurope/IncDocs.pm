@@ -881,16 +881,16 @@ sub create_request {
             };
         }
 
-        my $from_library_address = $library->branchillemail
+        my $reply_library_address = $library->branchillemail
             || $library->branchemail;
-        my $library_email_not_found = "Error: The library's email address could not be found";
-        unless ($from_library_address) {
-            $request->append_to_note($library_email_not_found);
+        my $reply_library_email_not_found = "Error: The 'reply to' library's ILL email address could not be found";
+        unless ($reply_library_address) {
+            $request->append_to_note($reply_library_email_not_found);
             $request->status('ERROR')->store;
             return {
                 error         => 1,
                 status        => '',
-                message       => $library_email_not_found,
+                message       => $reply_library_email_not_found,
                 method        => 'confirm',
                 stage         => 'availability',
                 illrequest_id => $request->illrequest_id,
@@ -901,7 +901,7 @@ sub create_request {
             {
                 letter                 => $letter,
                 from_address           => $from_library_address,
-                reply_address          => $from_library_address,
+                reply_address          => $reply_library_address,
                 to_address             => $requesterEmail,
                 message_transport_type => 'email',
             }
