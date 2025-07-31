@@ -897,6 +897,21 @@ sub create_request {
             };
         }
 
+        my $from_library_address = $library->from_email_address;
+        my $from_library_email_not_found = "Error: The 'from' library's email address could not be found";
+        unless ($from_library_address) {
+            $request->append_to_note($from_library_email_not_found);
+            $request->status('ERROR')->store;
+            return {
+                error         => 1,
+                status        => '',
+                message       => $from_library_email_not_found,
+                method        => 'confirm',
+                stage         => 'availability',
+                illrequest_id => $request->illrequest_id,
+            };
+        }
+
         my $enqueue_letter = C4::Letters::EnqueueLetter(
             {
                 letter                 => $letter,
