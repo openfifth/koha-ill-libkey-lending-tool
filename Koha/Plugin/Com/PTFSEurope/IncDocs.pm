@@ -1858,6 +1858,17 @@ sub availability {
         }
     }
 
+    if ( exists $result->{response}->{data}->{authors} ) {
+        my $authors = $result->{response}->{data}->{authors};
+        if ( defined $authors && length $authors ) {
+            my @authors = split( /;/, $authors );
+            if ( scalar @authors > 5 ) {
+                splice( @authors, 5 );
+            }
+            $result->{response}->{data}->{authors} = join( ';', @authors );
+        }
+    }
+
     $response->{backend_availability} = $result;
     $response->{future}               = "commit";
     $response->{illrequest_id}        = $request->illrequest_id;
