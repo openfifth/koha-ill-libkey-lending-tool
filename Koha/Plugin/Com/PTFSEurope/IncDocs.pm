@@ -931,6 +931,7 @@ sub create_request {
         );
 
         $request->status('COMP');
+        $request->completed( dt_from_string() );
         $request->accessurl($submission->{other}->{contentLocation});
         $request->store;
 
@@ -1956,6 +1957,7 @@ sub status {
 
         if ( $result->{status} eq 'complete' ) {
             $request->status('COMP');
+            $request->completed( dt_from_string() );
         } elsif ( $result->{status} eq 'declined' ) {
             $request->status('REQREV');
             my $note = "IncDocs library ID $result->{lenderLibraryId}";
