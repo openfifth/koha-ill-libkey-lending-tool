@@ -1762,6 +1762,16 @@ sub list_incdocs_libraries {
         return;
     }
 
+    my $additional_field =
+        Koha::AdditionalFields->find(
+        { name => $self->{config}->{library_libraryidfield}, tablename => 'branches' } );
+    unless ( $additional_field ) {
+        $template->param( 'error' => 'Missing configured library ID field additional field "'
+                . $self->{config}->{library_libraryidfield}. '" <br><a href="/cgi-bin/koha/admin/additional-fields.pl?tablename=branches">Click here to add</a>' );
+        $self->output_html( $template->output() );
+        return;
+    }
+
     my $incdocs =
         Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend( { logger => Koha::ILL::Request::Logger->new } );
     my $response = $incdocs->{_api}->Libraries();
@@ -1776,22 +1786,16 @@ sub list_incdocs_libraries {
 
     # iterate on libraries
     foreach my $incdocs_library (@$libraries) {
-        my $additional_field =
-            Koha::AdditionalFields->search(
-            { name => $self->{config}->{library_libraryidfield}, tablename => 'branches' } )->next;
+        my @koha_libraries = Koha::Libraries->filter_by_additional_fields(
+            [
+                {
+                    id    => $additional_field->id,
+                    value => $incdocs_library->{id},
+                },
+            ]
+        )->as_list;
 
-        if ($additional_field) {
-            my @koha_libraries = Koha::Libraries->filter_by_additional_fields(
-                [
-                    {
-                        id    => $additional_field->id,
-                        value => $incdocs_library->{id},
-                    },
-                ]
-            )->as_list;
-
-            $incdocs_library->{koha_libraries} = \@koha_libraries;
-        }
+        $incdocs_library->{koha_libraries} = \@koha_libraries;
     }
 
     my @sorted_libraries = sort {
