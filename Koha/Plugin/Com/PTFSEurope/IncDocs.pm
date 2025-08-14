@@ -1751,7 +1751,16 @@ sub list_incdocs_libraries {
     my ( $self, $args ) = @_;
     my $cgi = $self->{'cgi'};
 
-    my $template = $self->get_template( { file => 'intranet-tmpl/list-incdocs-libraries.tt' } );
+    my ( $template, $loggedinuser, $cookie ) = C4::Auth::get_template_and_user(
+        {
+            template_name   => $self->mbf_path('intranet-tmpl/list-incdocs-libraries.tt'),
+            query           => $cgi,
+            type            => "intranet",
+            debug           => undef,
+            authnotrequired => 1,
+            flagsrequired   => {}
+        }
+    );
 
     if (   !$self->{config}->{access_token}
         || !$self->{config}->{library_group}
@@ -1804,7 +1813,7 @@ sub list_incdocs_libraries {
     } @$libraries;
 
     $template->param( 'libraries' => \@sorted_libraries );
-    $self->output_html( $template->output() );
+    $self->output_html( $template->output(), undef, undef, $cookie );
 }
 
 sub template_include_paths {
