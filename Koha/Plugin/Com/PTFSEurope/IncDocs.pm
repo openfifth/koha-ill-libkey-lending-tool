@@ -39,7 +39,7 @@ use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
-our $VERSION = "2.3.7";
+our $VERSION = "2.3.8";
 
 our $metadata = {
     name            => 'IncDocs',
@@ -1767,7 +1767,7 @@ sub list_incdocs_libraries {
         || !$self->{config}->{library_libraryidfield} )
     {
         $template->param( 'error' => 'Configuration invalid or incomplete' );
-        $self->output_html( $template->output() );
+        $self->output_html( $template->output(), undef, undef, $cookie );
         return;
     }
 
@@ -1777,7 +1777,7 @@ sub list_incdocs_libraries {
     unless ( $additional_field ) {
         $template->param( 'error' => 'Missing configured library ID field additional field "'
                 . $self->{config}->{library_libraryidfield}. '" <br><a href="/cgi-bin/koha/admin/additional-fields.pl?tablename=branches">Click here to add</a>' );
-        $self->output_html( $template->output() );
+        $self->output_html( $template->output(), undef, undef, $cookie );
         return;
     }
 
@@ -1787,7 +1787,7 @@ sub list_incdocs_libraries {
 
     if ( $response->{status} && $response->{error} ) {
         $template->param( 'error' => $response->{error} . ' - ' . $response->{error_description} );
-        $self->output_html( $template->output() );
+        $self->output_html( $template->output(), undef, undef, $cookie );
         return;
     }
 
