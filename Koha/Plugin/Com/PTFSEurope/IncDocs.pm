@@ -1971,6 +1971,7 @@ sub status {
         if ( $result->{status} eq 'complete' ) {
             $request->status('COMP');
             $request->completed( dt_from_string() );
+            $request->store();
         } elsif ( $result->{status} eq 'declined' ) {
             $request->status('REQREV');
             my $note = "IncDocs library ID $result->{lenderLibraryId}";
