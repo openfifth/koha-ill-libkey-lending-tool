@@ -1448,6 +1448,15 @@ sub fieldmap {
             no_submit      => 1,
             position       => 1
         },
+        article_author => {
+            exclude        => 1,
+            type           => "string",
+            label          => "Article author",
+            ill            => "article_author",
+            api_max_length => 255,
+            no_submit      => 1,
+            position       => 1
+        },
         volume => {
             type           => "string",
             label          => "Volume number",
