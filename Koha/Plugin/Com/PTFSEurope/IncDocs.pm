@@ -39,7 +39,7 @@ use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
-our $VERSION = "2.4.0";
+our $VERSION = "2.4.1";
 
 our $metadata = {
     name            => 'IncDocs',
@@ -1453,6 +1453,15 @@ sub fieldmap {
             type           => "string",
             label          => "Article author",
             ill            => "article_author",
+            api_max_length => 255,
+            no_submit      => 1,
+            position       => 1
+        },
+        published_date => {
+            exclude        => 1,
+            type           => "string",
+            label          => "Published date",
+            ill            => "published_date",
             api_max_length => 255,
             no_submit      => 1,
             position       => 1
