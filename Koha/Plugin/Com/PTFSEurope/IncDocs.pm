@@ -1419,7 +1419,6 @@ All fields expected by the API
 
 Key = API metadata element name
   hide = Make the field hidden in the form
-  no_submit = Do not pass to IncDocs Lending Tool API
   api_max_length = Max length of field enforced by the IncDocs Lending Tool API
   exclude = Do not include on the entry form
   type = Does an element contain a string value or an array of string values?
@@ -1445,7 +1444,6 @@ sub fieldmap {
             label          => "Article title",
             ill            => "article_title",
             api_max_length => 255,
-            no_submit      => 1,
             position       => 1
         },
         article_author => {
@@ -1454,7 +1452,6 @@ sub fieldmap {
             label          => "Article author",
             ill            => "article_author",
             api_max_length => 255,
-            no_submit      => 1,
             position       => 1
         },
         published_date => {
@@ -1463,7 +1460,6 @@ sub fieldmap {
             label          => "Published date",
             ill            => "published_date",
             api_max_length => 255,
-            no_submit      => 1,
             position       => 1
         },
         volume => {
@@ -1547,14 +1543,12 @@ sub fieldmap {
             type      => "string",
             label     => "Order date UTC",
             exclude   => 1,
-            no_submit => 1,
             position  => 99
         },
         statusdateutc => {
             type      => "string",
             label     => "Status date UTC",
             exclude   => 1,
-            no_submit => 1,
             position  => 99
         },
         authors => {
@@ -1562,7 +1556,6 @@ sub fieldmap {
             label     => "Authors",
             ill       => "author",
             exclude   => 1,
-            no_submit => 1,
             position  => 99
         },
         year => {
@@ -1570,7 +1563,6 @@ sub fieldmap {
             ill       => "year",
             exclude   => 1,
             label     => "Year",
-            no_submit => 1,
             position  => 99
         },
         type => {
@@ -1578,105 +1570,90 @@ sub fieldmap {
             ill       => "type",
             exclude   => 1,
             label     => "Type",
-            no_submit => 1,
             position  => 99
         },
         lenderLibraryId => {
             type      => "string",
             exclude   => 1,
             label     => "Lender library ID",
-            no_submit => 1,
             position  => 99
         },
         contentLocation => {
             type      => "string",
             exclude   => 1,
             label     => "Content location",
-            no_submit => 1,
             position  => 99
         },
         fullTextFile => {
             type      => "string",
             exclude   => 1,
             label     => "Full text file",
-            no_submit => 1,
             position  => 99
         },
         lenderLibraryName => {
             type      => "string",
             exclude   => 1,
             label     => "Lender library name",
-            no_submit => 1,
             position  => 99
         },
         incdocs_type => {
             type      => "string",
             exclude   => 1,
             label     => "IncDocs type",
-            no_submit => 1,
             position  => 99
         },
         customReference => {
             type      => "string",
             exclude   => 1,
             label     => "Custom reference",
-            no_submit => 1,
             position  => 99
         },
         incdocs_id => {
             type      => "string",
             exclude   => 1,
             label     => "IncDocs ID",
-            no_submit => 1,
             position  => 99
         },
         requesterLibraryId => {
             type      => "string",
             exclude   => 1,
             label     => "Requester library ID",
-            no_submit => 1,
             position  => 99
         },
         requesterEmail => {
             type      => "string",
             exclude   => 1,
             label     => "Requester email",
-            no_submit => 1,
             position  => 99
         },
         articleId => {
             type      => "string",
             exclude   => 1,
             label     => "Article ID",
-            no_submit => 1,
             position  => 99
         },
         created => {
             type      => "string",
             exclude   => 1,
             label     => "IncDocs created",
-            no_submit => 1,
             position  => 99
         },
         lastUpdated => {
             type      => "string",
             exclude   => 1,
             label     => "IncDocs last updated",
-            no_submit => 1,
             position  => 99
         },
         libraryGroupId => {
             type      => "string",
             exclude   => 1,
             label     => "Library groupd ID",
-            no_submit => 1,
             position  => 99
         },
         declined_lenderLibraryId_list => {
             type      => "string",
             exclude   => 1,
             label     => "declined libraries list",
-            no_submit => 1,
             hide      => 1,
             position  => 99
         },
@@ -1684,7 +1661,6 @@ sub fieldmap {
             type      => "string",
             exclude   => 1,
             label     => "unauthenticated first name",
-            no_submit => 1,
             hide      => 1,
             position  => 99
         },
@@ -1692,7 +1668,6 @@ sub fieldmap {
             type      => "string",
             exclude   => 1,
             label     => "unauthenticated last name",
-            no_submit => 1,
             hide      => 1,
             position  => 99
         },
@@ -1700,7 +1675,6 @@ sub fieldmap {
             type      => "string",
             exclude   => 1,
             label     => "unauthenticated email",
-            no_submit => 1,
             hide      => 1,
             position  => 99
         },
