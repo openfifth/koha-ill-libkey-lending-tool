@@ -1159,7 +1159,11 @@ sub capabilities {
 
         unmediated_ill => sub { $self->unmediated_confirm(@_); },
 
-        opac_unauthenticated_ill_requests => sub { return 1; }
+        opac_unauthenticated_ill_requests => sub { return 1; },
+
+        provides_batch_requests => sub { return 1; },
+
+        create_api => sub { $self->create_api(@_) }
     };
 
     return $capabilities->{$name};
@@ -1368,6 +1372,28 @@ sub _openurl_to_incdocs {
     }
     $params->{other} = $return;
     return $params;
+}
+
+sub create_api {
+    my ( $self, $body, $request ) = @_;
+
+    foreach my $attr ( @{ $body->{extended_attributes} } ) {
+        my $prop    = $attr->{type};
+        my $rd_prop = find_core_to_incdocs($prop);
+        if ($rd_prop) {
+            my @value = map { $_->{type} eq $rd_prop ? $_->{value} : () } @{ $body->{extended_attributes} };
+            $body->{$rd_prop} = $value[0];
+        }
+    }
+
+    delete $body->{extended_attributes};
+    my $submission = $self->create_submission(
+        {
+            request => $request,
+            other   => $body
+        }
+    );
+    return $submission;
 }
 
 =head3 find_core_to_incdocs
