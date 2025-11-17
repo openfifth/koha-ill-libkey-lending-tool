@@ -20,7 +20,7 @@ Make a call to /libraries
 sub Libraries {
     my $c = shift->openapi->valid_input or return;
 
-    my $response = _make_request( 'GET', 'libraries' );
+    my $response = $c->_get_libraries_data;
 
     if ( !defined $response ) {
         return $c->render(
@@ -72,31 +72,41 @@ sub Backend_Availability {
         );
     }
 
-    my $library = Koha::Libraries->find( $metadata->{branchcode} );
-    my $additional_field =
-        Koha::AdditionalFields->search( { name => $config->{library_libraryidfield}, tablename => 'branches' } )->next;
+    my $incdocs_id_to_use;
+    if ( $c->validation->param('incdocs_id') ) {
+        $incdocs_id_to_use = $c->validation->param('incdocs_id');
+    } else {
+        my $library = Koha::Libraries->find( $metadata->{branchcode} );
+        my $additional_field =
+            Koha::AdditionalFields->search( { name => $config->{library_libraryidfield}, tablename => 'branches' } )
+            ->next;
 
-    unless ($additional_field) {
-        return $c->render(
-            status  => 400,
-            openapi => {
-                      error => 'Configured additional field '
-                    . $config->{library_libraryidfield}
-                    . ' does not exist for libraries'
-            }
-        );
-    }
+        unless ($additional_field) {
+            return $c->render(
+                status  => 400,
+                openapi => {
+                          error => 'Configured additional field '
+                        . $config->{library_libraryidfield}
+                        . ' does not exist for libraries'
+                }
+            );
+        }
 
-    my $incdocs_id = $library->additional_field_values->search(
-        { 'record_id' => $library->id, 'field_id' => $additional_field->id } )->next;
+        my $incdocs_id = $library->additional_field_values->search(
+            { 'record_id' => $library->id, 'field_id' => $additional_field->id } )->next;
 
-    unless ($incdocs_id) {
-        return $c->render(
-            status  => 400,
-            openapi => {
-                error => 'Destination library ' . $library->branchname . ' does not have a value for ' . $additional_field->name,
-            }
-        );
+        unless ($incdocs_id) {
+            return $c->render(
+                status  => 400,
+                openapi => {
+                          error => 'Destination library '
+                        . $library->branchname
+                        . ' does not have a value for '
+                        . $additional_field->name,
+                }
+            );
+        }
+        $incdocs_id_to_use = $incdocs_id->value;
     }
 
     my $id_code  = $metadata->{doi} ? 'doi'            : 'pmid';
@@ -109,7 +119,7 @@ sub Backend_Availability {
     my $response =
         _make_request(
             'GET',
-            'libraries/' . $incdocs_id->value . '/articles/' . $id_code . '/' . $id_value,
+            'libraries/' . $incdocs_id_to_use . '/articles/' . $id_code . '/' . $id_value,
             undef,
             $c->validation->param('forceIll')
         );
@@ -125,12 +135,17 @@ sub Backend_Availability {
         );
     }
 
+    my $libraries_response = $c->_get_libraries_data;
+    my $incdocs_libraries  = $libraries_response->{data};
+    my ($incdocs_library)  = grep { $_->{id} eq $incdocs_id_to_use } @$incdocs_libraries;
+    my $incdocs_id_name    = $incdocs_library ? $incdocs_library->{name} : undef;
+
     if ( $response && ref $response->{data} eq 'HASH' && $response->{data}->{illLibraryName} ) {
         return $c->render(
             status  => 200,
             openapi => {
                 response => $response,
-                success  => "Found at another library",
+                success => "Found at another library. Requesting library: " . $incdocs_id_name . " (" . $incdocs_id_to_use . ")",
             }
         );
     } elsif ( $response && ref $response->{data} eq 'HASH' && !$response->{data}->{illLibraryName} && $response->{data}->{contentLocation} ) {
@@ -138,7 +153,7 @@ sub Backend_Availability {
             status  => 200,
             openapi => {
                 response => $response,
-                success  => "Found locally",
+                success => "Found locally. Requesting library: " . $incdocs_id_name . " (" . $incdocs_id_to_use . ")",
             }
         );
     }
@@ -262,6 +277,15 @@ sub _get_plugin_config {
     my $config = $plugin->retrieve_data("incdocs_config");
     return decode_json($config) if $config;
     return {};
+}
+
+sub _get_libraries_data {
+    my ($c) = @_;
+    my $response = _make_request( 'GET', 'libraries' );
+
+    return if !defined $response;
+
+    return $response;
 }
 
 1;

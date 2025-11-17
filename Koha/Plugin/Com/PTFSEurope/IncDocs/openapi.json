@@ -37,6 +37,13 @@
                     "description": "Whether to force Ill or not",
                     "required": false,
                     "type": "boolean"
+                },
+                {
+                    "name": "incdocs_id",
+                    "in": "query",
+                    "description": "Optional specific incdocs_id",
+                    "required": false,
+                    "type": "integer"
                 }
             ],
             "produces": [
