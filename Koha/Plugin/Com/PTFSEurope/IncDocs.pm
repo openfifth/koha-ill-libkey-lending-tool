@@ -1849,8 +1849,32 @@ sub availability {
     my $request = $params->{request};
     my $forceIll = $params->{other}->{forceIll} // 0;
 
+    my $library = Koha::Libraries->find( $params->{request}->branchcode );
+    my $additional_field =
+        Koha::AdditionalFields->search( { name => $self->{config}->{library_libraryidfield}, tablename => 'branches' } )->next;
+    my $incdocs_ids = $library->additional_field_values->search(
+        { 'record_id' => $library->id, 'field_id' => $additional_field->id } );
+
+    my $incdocs_id_to_use = $params->{other}->{incdocs_id} // $incdocs_ids->next->value;
+
     my $incdocs =
         Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend( { logger => Koha::ILL::Request::Logger->new } );
+    my $incdocs_libraries = $incdocs->{_api}->Libraries();
+    $incdocs_libraries = $incdocs_libraries->{data};
+
+    if ( $incdocs_ids->count > 1 ) {
+        my @other_candidates;
+        my @other_ids = grep { $_ ne $incdocs_id_to_use } map { $_->value } $incdocs_ids->as_list;
+        foreach my $incdocs_library (@$incdocs_libraries) {
+            # Set other candidate IDs
+            push @other_candidates,
+                map { { id => $_, name => $incdocs_library->{name} } }
+                grep { $_ eq $incdocs_library->{id} } @other_ids;
+        }
+        $response->{other_incdocs_id_candidates} = \@other_candidates if @other_candidates;
+    }
+    # Set current utilized ID
+    ( $response->{incdocs_id_utilized} ) = grep { $_->{id} eq $incdocs_id_to_use } @$incdocs_libraries;
 
     my $metadata = {
         branchcode => $params->{request}->branchcode,
@@ -1864,7 +1888,8 @@ sub availability {
 
     $metadata = Koha::ILL::Request::Workflow->new->prep_metadata($metadata);
 
-    my $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata, forceIll => $forceIll } );
+    my $result = $incdocs->{_api}
+        ->Backend_Availability( { incdocs_id => $incdocs_id_to_use, metadata => $metadata, forceIll => $forceIll } );
 
     if ( $request->status eq 'REQREV' ) {
         my $declined_lenderLibraryId_list =
