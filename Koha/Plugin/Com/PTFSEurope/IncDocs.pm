@@ -962,7 +962,7 @@ sub create_request {
     my $result = $incdocs_api->Create_Fulfillment_Request(
         {
             articleId          => $submission->{other}->{articleId},
-            customReference    => $config->{payload_customreference} || '',
+            customReference    => $config->{payload_customreference} || $request->id_prefix.$request->illrequest_id,
             lenderLibraryId    => $submission->{other}->{lenderLibraryId},
             requesterEmail     => $requesterEmail,
             requesterLibraryId => $requesterLibraryId,
