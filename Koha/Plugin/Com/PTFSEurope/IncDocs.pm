@@ -794,7 +794,7 @@ sub create_request {
     my $incdocs_id = $library->additional_field_values->search(
         { 'record_id' => $library->id, 'field_id' => $additional_field->id } )->next;
 
-    my $requesterLibraryId = $incdocs_id->value;
+    my $requesterLibraryId = $submission->{other}->{requesterLibraryId} // $incdocs_id->value;
 
     my $patron = $request->borrowernumber ? Koha::Patrons->find( $request->borrowernumber ) : undef;
 
@@ -1646,6 +1646,12 @@ sub fieldmap {
             label     => "Requester library ID",
             position  => 99
         },
+        requesterLibraryName => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Requester library Name",
+            position  => 99
+        },
         requesterEmail => {
             type      => "string",
             exclude   => 1,
@@ -2154,6 +2160,8 @@ sub _reset_incdocs_info {
     $request->illrequestattributes->search( { type => 'lenderLibraryId' } )->delete;
     $request->illrequestattributes->search( { type => 'lenderLibraryName' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterEmail' } )->delete;
+    $request->illrequestattributes->search( { type => 'requesterLibraryId' } )->delete;
+    $request->illrequestattributes->search( { type => 'requesterLibraryName' } )->delete;
     $request->illrequestattributes->search( { type => 'lastUpdated' } )->delete;
     $request->illrequestattributes->search( { type => 'incdocs_id' } )->delete;
     $request->illrequestattributes->search( { type => 'created' } )->delete;

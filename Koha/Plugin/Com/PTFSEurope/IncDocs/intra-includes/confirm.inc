@@ -29,7 +29,7 @@
                         [% IF ( whole.found_locally ) %]
                             <div>This article was found locally and will not be placed with IncDocs, the article link will be directly sent to the patron instead.</div>
                         [% END %]
-                        [% SET get_params = "op=" _ whole.method _ "&stage=" _ whole.future _ "&illrequest_id=" _ whole.illrequest_id %]
+                        [% SET get_params = "op=" _ whole.method _ "&stage=" _ whole.future _ "&illrequest_id=" _ whole.illrequest_id _ "&requesterLibraryId=" _ whole.incdocs_id_utilized.id _ "&requesterLibraryName=" _ whole.incdocs_id_utilized.name %]
                         [% FOREACH key IN incdocsRsp.keys %]
                             [% value = incdocsRsp.$key %]
                             [% IF key != 'op' && key != 'method' && key != 'custom_key' && key != 'custom_value' && key != 'csrf_token' %]
