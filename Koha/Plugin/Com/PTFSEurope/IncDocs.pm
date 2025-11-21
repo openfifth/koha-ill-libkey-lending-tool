@@ -83,9 +83,11 @@ sub configure {
     my $cgi      = $self->{'cgi'};
     my $template = $self->get_template( { file => 'intranet-tmpl/configure.tt' } );
     my $config   = $self->{config};
+    my $aliases  = C4::Koha::GetAuthorisedValues('ILL_STATUS_ALIAS');
     $template->param(
         config => $self->{config},
-        cwd    => dirname(__FILE__)
+        cwd    => dirname(__FILE__),
+        status_aliases => $aliases,
     );
     if ( $cgi->param('save') ) {
         my %blacklist = ( 'save' => 1, 'class' => 1, 'method' => 1 );

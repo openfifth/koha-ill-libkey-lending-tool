@@ -63,6 +63,62 @@
                             </li>
                         </ol>
                     </div>
+                    <legend>Status alias</legend>
+                    [% IF status_aliases.size == 0 %]
+                    <p>There are no status aliases configured. Click <a target="_blank" href="/cgi-bin/koha/admin/authorised_values.pl?searchfield=ILL_STATUS_ALIAS">here</a> to add</p>
+                    [% ELSE %]
+                        <div class="row">
+                            <ol>
+                                <li>
+                                    <label for="incdocs_status_alias_locally_oa_input">Found locally through open access: </label>
+                                    <select name="status_alias_locally_oa">
+                                        [% FOREACH sa IN status_aliases %]
+                                            [% IF sa.authorised_value == config.status_alias_locally_oa %]
+                                                <option value="[% sa.authorised_value %]" selected="selected">[% sa.lib %]</option>
+                                            [% ELSE %]
+                                                <option value="[% sa.authorised_value %]">[% sa.lib %]</option>
+                                            [% END %]
+                                        [% END %]
+                                    </select>
+                                    <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The status alias that will be set for completed requests found locally through Open Access"><i class="fa-solid fa-circle-question"></i></a>
+                                </li>
+                            </ol>
+                        </div>
+                        <div class="row">
+                            <ol>
+                                <li>
+                                    <label for="incdocs_status_alias_locally_noa_input">Found locally not through open access: </label>
+                                    <select name="status_alias_locally_noa">
+                                        [% FOREACH sa IN status_aliases %]
+                                            [% IF sa.authorised_value == config.status_alias_locally_noa %]
+                                                <option value="[% sa.authorised_value %]" selected="selected">[% sa.lib %]</option>
+                                            [% ELSE %]
+                                                <option value="[% sa.authorised_value %]">[% sa.lib %]</option>
+                                            [% END %]
+                                        [% END %]
+                                    </select>
+                                    <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The status alias that will be set for completed requests found locally not through Open Access"><i class="fa-solid fa-circle-question"></i></a>
+                                </li>
+                            </ol>
+                        </div>
+                        <div class="row">
+                            <ol>
+                                <li>
+                                    <label for="incdocs_status_alias_another_library_input">Found at another library: </label>
+                                    <select name="status_alias_another_library">
+                                        [% FOREACH sa IN status_aliases %]
+                                            [% IF sa.authorised_value == config.status_alias_another_library %]
+                                                <option value="[% sa.authorised_value %]" selected="selected">[% sa.lib %]</option>
+                                            [% ELSE %]
+                                                <option value="[% sa.authorised_value %]">[% sa.lib %]</option>
+                                            [% END %]
+                                        [% END %]
+                                    </select>
+                                    <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The status alias that will be set for completed requests found at another library"><i class="fa-solid fa-circle-question"></i></a>
+                                </li>
+                            </ol>
+                        </div>
+                    [% END %]
                     <input type="hidden" name="save" value="1" />
                     <input class="btn btn-primary" id="submit_button" type="submit" value="Save configuration" />
                 </fieldset>
