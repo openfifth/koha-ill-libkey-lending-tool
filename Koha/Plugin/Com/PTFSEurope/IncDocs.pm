@@ -501,26 +501,6 @@ sub do_join {
     return $value;
 }
 
-=head3 mark_completed
-
-Mark a request as completed (status = COMP).
-
-=cut
-
-sub mark_completed {
-    my ($self) = @_;
-    $self->status('COMP')->store;
-    $self->completed( dt_from_string() )->store;
-    return {
-        error   => 0,
-        status  => '',
-        message => '',
-        method  => 'mark_completed',
-        stage   => 'commit',
-        next    => 'illview',
-    };
-}
-
 =head3 migrate
 
 Migrate a request into or out of this backend
