@@ -915,6 +915,7 @@ sub create_request {
         $request->status('COMP');
         $request->completed( dt_from_string() );
         $request->accessurl($submission->{other}->{contentLocation});
+        $self->_set_auto_status_alias($request);
         $request->store;
 
         # Log the outcome
@@ -2008,6 +2009,7 @@ sub status {
         if ( $result->{status} eq 'complete' ) {
             $request->status('COMP');
             $request->completed( dt_from_string() );
+            $self->_set_auto_status_alias($request);
             $request->store();
         } elsif ( $result->{status} eq 'declined' ) {
             $request->status('REQREV');
@@ -2061,6 +2063,52 @@ sub status {
             stage   => "commit",
         };
     }
+}
+
+sub _set_auto_status_alias {
+    my ( $self, $request ) = @_;
+
+    my $existing_status_aliases = C4::Koha::GetAuthorisedValues('ILL_STATUS_ALIAS');
+    my $status_alias_exists;
+
+    # Found at another library
+    if ( defined $request->orderid && defined $self->{config}->{status_alias_another_library} ){
+        $status_alias_exists =
+            grep { $_->{authorised_value} eq $self->{config}->{status_alias_another_library} }
+                @$existing_status_aliases;
+
+        if ($status_alias_exists){
+            $request->status_alias( $self->{config}->{status_alias_another_library} )->store;
+            return 1;
+        }
+    }
+
+    # Found locally through Open Access
+    my $openAccess = $request->extended_attributes->find( { type => 'openAccess' } );
+    if ( !defined $request->orderid && defined $openAccess && $openAccess->value == 1 ) {
+        $status_alias_exists =
+            grep { $_->{authorised_value} eq $self->{config}->{status_alias_locally_oa} }
+            @$existing_status_aliases;
+
+        if ($status_alias_exists) {
+            $request->status_alias( $self->{config}->{status_alias_locally_oa} );
+            return 1;
+        }
+    }
+
+    # Found locally not through Open Access
+    my $openAccess = $request->extended_attributes->find( { type => 'openAccess' } );
+    if ( !defined $request->orderid && defined $openAccess && $openAccess->value == 0 ) {
+        $status_alias_exists =
+            grep { $_->{authorised_value} eq $self->{config}->{status_alias_locally_noa} } @$existing_status_aliases;
+
+        if ($status_alias_exists) {
+            $request->status_alias( $self->{config}->{status_alias_locally_noa} );
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 =head3 unmediated_confirm
