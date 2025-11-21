@@ -663,7 +663,7 @@ sub create_illrequestattributes {
             # If we're working with core metadata, check if this field
             # has a core equivalent
             ( ( $core && $fields->{$field}->{ill} ) || !$core )
-            && $metadata->{$field}
+            && defined $metadata->{$field}
             && length $metadata->{$field} > 0
             )
         {
@@ -1596,6 +1596,12 @@ sub fieldmap {
             type      => "string",
             exclude   => 1,
             label     => "Full text file",
+            position  => 99
+        },
+        openAccess => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Open Access",
             position  => 99
         },
         lenderLibraryName => {
