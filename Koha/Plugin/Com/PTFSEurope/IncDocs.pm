@@ -1619,27 +1619,6 @@ sub fieldmap {
             hide      => 1,
             position  => 99
         },
-        unauthenticated_first_name => {
-            type      => "string",
-            exclude   => 1,
-            label     => "unauthenticated first name",
-            hide      => 1,
-            position  => 99
-        },
-        unauthenticated_last_name => {
-            type      => "string",
-            exclude   => 1,
-            label     => "unauthenticated last name",
-            hide      => 1,
-            position  => 99
-        },
-        unauthenticated_email => {
-            type      => "string",
-            exclude   => 1,
-            label     => "unauthenticated email",
-            hide      => 1,
-            position  => 99
-        },
     };
 }
 
