@@ -2097,7 +2097,6 @@ sub _set_auto_status_alias {
     }
 
     # Found locally not through Open Access
-    my $openAccess = $request->extended_attributes->find( { type => 'openAccess' } );
     if ( !defined $request->orderid && defined $openAccess && $openAccess->value == 0 ) {
         $status_alias_exists =
             grep { $_->{authorised_value} eq $self->{config}->{status_alias_locally_noa} } @$existing_status_aliases;
