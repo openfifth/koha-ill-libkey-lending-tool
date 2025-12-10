@@ -692,50 +692,6 @@ sub create_illrequestattributes {
     }
 }
 
-=head3 prep_submission_metadata
-
-Given a submission's metadata, probably from a form,
-but maybe as an ILL::Request::Attributes object,
-and a partly constructed hashref, add any metadata that
-is appropriate for this material type
-
-=cut
-
-sub prep_submission_metadata {
-    my ( $self, $metadata, $return ) = @_;
-
-    $return = $return //= {};
-
-    my $metadata_hashref = {};
-
-    if ( ref $metadata eq "Koha::ILL::Request::Attributes" ) {
-        while ( my $attr = $metadata->next ) {
-            $metadata_hashref->{ $attr->type } = $attr->value;
-        }
-    } else {
-        $metadata_hashref = $metadata;
-    }
-
-    # Get our canonical field list
-    my $fields = $self->fieldmap;
-
-    # Iterate our list of fields
-    foreach my $field ( keys %{$fields} ) {
-        if ( $metadata_hashref->{$field}
-            && length $metadata_hashref->{$field} > 0 )
-        {
-            $metadata_hashref->{$field} =~ s/  / /g;
-            if ( $fields->{$field}->{api_max_length} ) {
-                $return->{$field} = substr( $metadata_hashref->{$field}, 0, $fields->{$field}->{api_max_length} );
-            } else {
-                $return->{$field} = $metadata_hashref->{$field};
-            }
-        }
-    }
-
-    return $return;
-}
-
 =head3 submit_and_request
 
 Creates a local submission, then uses the returned ID to create
