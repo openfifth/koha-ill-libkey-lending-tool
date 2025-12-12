@@ -44,7 +44,7 @@
                                 </a>
                                 [% IF ( whole.complete_without_sending_button ) %]
                                     <a class="mb-2 btn btn-primary" href="/cgi-bin/koha/ill/ill-requests.pl?[% get_params %]&amp;complete_without_sending=1">
-                                        <i class="fa-solid fa-paper-plane"></i> Complete without sending article email to patron
+                                        <i class="fa-solid fa-check"></i> Complete without sending article email to patron
                                     </a>
                                 [% END %]
                             [% ELSE %]
