@@ -64,7 +64,7 @@
                         </ol>
                     </div>
                     <legend>Status alias</legend>
-                    [% IF status_aliases.size == 0 %]
+                    [% IF !status_aliases %]
                     <p>There are no status aliases configured. Click <a target="_blank" href="/cgi-bin/koha/admin/authorised_values.pl?searchfield=ILL_STATUS_ALIAS">here</a> to add</p>
                     [% ELSE %]
                         <div class="row">
