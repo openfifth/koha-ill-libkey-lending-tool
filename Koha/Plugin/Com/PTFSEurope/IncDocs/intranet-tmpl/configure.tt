@@ -48,13 +48,24 @@
                             </li>
                         </ol>
                     </div>
-                    <legend>Email template notices</legend>
+                    <legend>'Found locally' options</legend>
                     <div class="row">
                         <ol>
                             <li>
                                 <label for="incdocs_requesting_library_email_template_input">Template notice to use when article is found locally: </label>
                                 <input id="incdocs_requesting_library_email_template_input" class="required_input" placeholder="Enter template notice code" type="text" name="requesting_library_email_template" value="[% config.requesting_library_email_template | html %]" size="35">
                                 <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The template notice code e.g. 'ILL_PARTNER_REQ'"><i class="fa-solid fa-circle-question"></i></a>
+                            </li>
+                            <li>
+                                <label for="incdocs_complete_without_sending_button_input">Show option to complete without sending article: </label>
+                                [% IF config.complete_without_sending_button %]
+                                    <input id="incdocs_complete_without_sending_button_input" class="required_input" type="checkbox" checked name="complete_without_sending_button">
+                                [% ELSE %]
+                                    <input id="incdocs_complete_without_sending_button_input" class="required_input" type="checkbox" name="complete_without_sending_button">
+                                [% END %]
+                                <a href="#" data-bs-toggle="tooltip" title="Enabling this will show a new button for locally found requests to complete the request but not send article to the patron">
+                                    <i class="fa-solid fa-circle-question"></i>
+                                </a>
                             </li>
                         </ol>
                     </div>

@@ -732,6 +732,20 @@ sub create_request {
 
     my $requesterEmail;
     if ( !$submission->{other}->{lenderLibraryId} && $submission->{other}->{contentLocation} ) {
+
+        if ( $submission->{other}->{complete_without_sending} ){
+            $self->found_locally_complete( $request, $requesterLibraryId, $submission->{other}->{contentLocation} );
+            return {
+                error   => 0,
+                status  => '',
+                message => '',
+                method  => 'confirm',
+                stage   => 'commit',
+                next    => 'illview',
+                value   => {}
+            };
+        }
+
         my $letter_code = $config->{requesting_library_email_template};
         $requesterEmail =
               $patron
@@ -854,22 +868,7 @@ sub create_request {
             }
         );
 
-        $request->status('COMP');
-        $request->completed( dt_from_string() );
-        $request->accessurl($submission->{other}->{contentLocation});
-        $self->_set_auto_status_alias($request);
-        $request->store;
-
-        # Log the outcome
-        $self->log_request_outcome(
-            {
-                outcome => 'INCDOCS_FOUND_LOCALLY',
-                request => $request,
-                message => $requesterLibraryId
-            }
-        );
-
-        $request->add_or_update_attributes( { lenderLibraryId => $requesterLibraryId } );
+        $self->found_locally_complete( $request, $requesterLibraryId, $submission->{other}->{contentLocation} );
 
         return {
             error   => 0,
@@ -955,6 +954,33 @@ sub create_request {
         next    => 'illview',
         value   => {}
     };
+}
+
+=head3 found_locally_complete
+
+Complete a found_locally request
+
+=cut
+
+sub found_locally_complete {
+    my ( $self, $request, $requesterLibraryId, $contentLocation ) = @_;
+
+    $request->status('COMP');
+    $request->completed( dt_from_string() );
+    $request->accessurl( $contentLocation );
+    $self->_set_auto_status_alias($request);
+    $request->store;
+
+    # Log the outcome
+    $self->log_request_outcome(
+        {
+            outcome => 'INCDOCS_FOUND_LOCALLY',
+            request => $request,
+            message => $requesterLibraryId
+        }
+    );
+
+    $request->add_or_update_attributes( { lenderLibraryId => $requesterLibraryId } );
 }
 
 =head3 confirm
@@ -1855,7 +1881,8 @@ sub availability {
         $request->status('UNAVAILABLE')->store if ( $request->status ne 'UNAVAILABLE' );
     }
 
-    $response->{found_locally} = 1 unless $result->{response}->{data}->{illLibraryId};
+    $response->{found_locally}            = 1 unless $result->{response}->{data}->{illLibraryId};
+    $response->{complete_without_sending_button} = 1 if $self->{config}->{complete_without_sending_button};
 
     return $response;
 }
