@@ -727,7 +727,8 @@ sub create_request {
         _reset_incdocs_info($request);
     }
 
-    $self->create_illrequestattributes( $request, $submission->{other} );
+    my $request_details = $self->_get_request_details( $submission, $submission->{other} );
+    $request->add_or_update_attributes($request_details);
 
     my $requesterEmail;
     if ( !$submission->{other}->{lenderLibraryId} && $submission->{other}->{contentLocation} ) {
@@ -868,7 +869,7 @@ sub create_request {
             }
         );
 
-        $self->create_illrequestattributes( $request, {lenderLibraryId => $requesterLibraryId} );
+        $request->add_or_update_attributes( { lenderLibraryId => $requesterLibraryId } );
 
         return {
             error   => 0,
@@ -943,7 +944,7 @@ sub create_request {
         }
     );
 
-    $self->create_illrequestattributes( $request, $result );
+    $request->add_or_update_attributes($result);
 
     return {
         error   => 0,
@@ -1957,7 +1958,7 @@ sub status {
             }
             my $string = join "|", @declined_lenderLibraryId_array;
 
-            $self->create_illrequestattributes( $params->{request}, { declined_lenderLibraryId_list => $string } );
+            $request->add_or_update_attributes( { declined_lenderLibraryId_list => $string } );
         }
 
         # Log the outcome
