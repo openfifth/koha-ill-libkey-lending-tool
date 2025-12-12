@@ -1,0 +1,21 @@
+Dear Sir/Madam,
+
+You have requested the following article:
+[% ill_full_metadata %]
+
+Please find the links below for access:
+<a href="[% illrequestattributes.fullTextFile %]">Download PDF</a>
+<a href="[% illrequestattributes.contentLocation %]">Article link</a>
+
+Kind regards
+
+[% branch.branchname %]
+[% branch.branchaddress1 %]
+[% branch.branchaddress2 %]
+[% branch.branchaddress3 %]
+[% branch.branchcity %]
+[% branch.branchstate %]
+[% branch.branchzip %]
+[% branch.branchphone %]
+[% branch.branchillemail %]
+[% branch.branchemail %]

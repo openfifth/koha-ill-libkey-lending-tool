@@ -1166,7 +1166,7 @@ sub status_graph {
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs',
             method         => 'confirm',
-            next_actions   => [ 'STAT', 'COMP' ],
+            next_actions   => [ 'STAT', 'COMP', 'REQREV' ],
             ui_method_icon => 'fa-check',
         },
         UNAVAILABLE => {
@@ -1179,7 +1179,7 @@ sub status_graph {
             ui_method_icon => 'fa-check',
         },
         REQREV => {
-            prev_actions   => [ 'GENREQ' ],
+            prev_actions   => [ 'REQ', 'GENREQ' ],
             id             => 'REQREV',
             name           => 'Request declined',
             ui_method_name => 'Revert request',
@@ -1206,6 +1206,59 @@ sub status_graph {
             ui_method_icon => 0,
         },
     };
+}
+
+=head3 cancel
+
+  my $response = $backend->cancel({ params => $params });
+
+Will send an email to the lending library letting them know we no longer expect this request.
+
+=cut
+
+sub cancel {
+    my ( $self, $params ) = @_;
+
+    my $stage = $params->{other}->{stage};
+    my $libraryIllEmail = $params->{request}->illrequestattributes->find( { type => 'libraryIllEmail' } );
+
+    return {
+        error   => 1,
+        status  => 'unknown_stage',
+        message => '',
+        method  => 'cancel',
+        stage   => $params->{stage},
+        value   => {},
+    } unless $libraryIllEmail;
+
+
+    if ( !$stage || $stage eq 'init' ) {
+        return {
+            libraryIllEmail => $libraryIllEmail->value,
+            method          => 'cancel',
+            stage           => 'confirm',
+            value           => $params,
+        };
+    } elsif ( $stage eq 'confirm' ) {
+        # _reset_incdocs_info($params->{request});
+        return {
+            method => 'cancel',
+            stage  => 'commit',
+            next   => 'illview',
+            value  => $params,
+        };
+    } else {
+
+        # Invalid stage, return error.
+        return {
+            error   => 1,
+            status  => 'unknown_stage',
+            message => '',
+            method  => 'cancel',
+            stage   => $params->{stage},
+            value   => {},
+        };
+    }
 }
 
 =head3 _fail
@@ -1527,6 +1580,12 @@ sub fieldmap {
             type      => "string",
             exclude   => 1,
             label     => "Lender library ID",
+            position  => 99
+        },
+        libraryIllEmail => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Lender library email address",
             position  => 99
         },
         contentLocation => {
@@ -2115,6 +2174,7 @@ sub _reset_incdocs_info {
 
     $request->illrequestattributes->search( { type => 'lenderLibraryId' } )->delete;
     $request->illrequestattributes->search( { type => 'lenderLibraryName' } )->delete;
+    $request->illrequestattributes->search( { type => 'libraryIllEmail' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterEmail' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterLibraryId' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterLibraryName' } )->delete;
