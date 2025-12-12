@@ -11,7 +11,7 @@
             [% END %]
             <form id="IncDocs_configure" method="get">
                 <fieldset class="rows">
-                    <legend>API credentials</legend>
+                    <legend>API request details</legend>
                     <div class="row">
                         <ol>
                             <input type="hidden" name="class" value="[% CLASS %]"/>
@@ -26,11 +26,6 @@
                                 <input id="IncDocs_library_group_input" class="required_input" placeholder="Enter library group" type="text" name="library_group" value="[% config.library_group | html %]" size="35">
                                 <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The library group to be used for accessing the IncDocs API"><i class="fa-solid fa-circle-question"></i></a>
                             </li>
-                        </ol>
-                    </div>
-                    <legend>API request payload details</legend>
-                    <div class="row">
-                        <ol>
                             <li>
                                 <label for="IncDocs_payload_customreference_input">Custom reference: </label>
                                 <input id="IncDocs_payload_customreference_input" class="required_input" placeholder="PTFS-Europe TEST - DO NOT FULFILL" type="text" name="payload_customreference" value="[% config.payload_customreference | html %]" size="35">
