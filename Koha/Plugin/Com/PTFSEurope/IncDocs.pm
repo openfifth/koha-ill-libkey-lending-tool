@@ -857,6 +857,7 @@ sub create_request {
                 reply_address          => $reply_library_address,
                 to_address             => $requesterEmail,
                 message_transport_type => 'email',
+                $patron ? ( borrowernumber => $patron->borrowernumber ) : (),
             }
         );
 
