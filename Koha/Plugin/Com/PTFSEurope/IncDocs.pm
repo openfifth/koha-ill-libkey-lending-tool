@@ -1647,7 +1647,7 @@ sub fieldmap {
             hide      => 1,
             position  => 99
         },
-        retractionNoticeURL => {
+        retractionNoticeUrl => {
             type      => "string",
             exclude   => 1,
             label     => "Retraction notice URL",
