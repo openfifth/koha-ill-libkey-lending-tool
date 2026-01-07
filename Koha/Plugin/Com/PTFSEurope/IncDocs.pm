@@ -1637,7 +1637,7 @@ sub fieldmap {
         libraryGroupId => {
             type      => "string",
             exclude   => 1,
-            label     => "Library groupd ID",
+            label     => "Library group ID",
             position  => 99
         },
         declined_lenderLibraryId_list => {
@@ -1645,6 +1645,12 @@ sub fieldmap {
             exclude   => 1,
             label     => "declined libraries list",
             hide      => 1,
+            position  => 99
+        },
+        retractionNoticeURL => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Retraction notice URL",
             position  => 99
         },
     };
