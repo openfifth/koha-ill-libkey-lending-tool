@@ -39,7 +39,7 @@ use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
-our $VERSION = "2.5.8";
+our $VERSION = "2.5.9";
 
 our $metadata = {
     name            => 'IncDocs',
