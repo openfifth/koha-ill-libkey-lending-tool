@@ -728,6 +728,7 @@ sub create_request {
     }
 
     my $request_details = $self->_get_request_details( $submission, $submission->{other} );
+    $request_details->{article_title} = delete $request_details->{title};
     $request->add_or_update_attributes($request_details);
 
     my $requesterEmail;
