@@ -1,21 +1,14 @@
-Dear Sir/Madam,
+Dear [% illrequestattributes.lenderLibraryName %],
 
-You have requested the following article:
-[% ill_full_metadata %]
+We are writing to inform you that we no longer require the following article request and would like to cancel it.
 
-Please find the links below for access:
-<a href="[% illrequestattributes.fullTextFile %]">Download PDF</a>
-<a href="[% illrequestattributes.contentLocation %]">Article link</a>
+Title:  [% ill_bib_title %]
+Author: [% ill_bib_author %]
+IncDocs request ID: [% illrequest.orderid %]
 
-Kind regards
+We apologise for any inconvenience caused.
 
-[% branch.branchname %]
-[% branch.branchaddress1 %]
-[% branch.branchaddress2 %]
-[% branch.branchaddress3 %]
-[% branch.branchcity %]
-[% branch.branchstate %]
-[% branch.branchzip %]
-[% branch.branchphone %]
-[% branch.branchillemail %]
-[% branch.branchemail %]
+Kind regards,
+
+[% branches.branchname %]
+[% branches.branchillemail || branches.branchemail %]

@@ -1,5 +1,5 @@
 [% IF whole.error %]
-    <p>Unhandled error</p>
+    <p class="alert alert-warning">[% whole.message || 'Unhandled error' %]</p>
 [% END %]
 
 [% IF whole.stage == "confirm" %]

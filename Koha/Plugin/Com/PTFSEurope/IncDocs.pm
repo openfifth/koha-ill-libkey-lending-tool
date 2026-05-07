@@ -1277,9 +1277,68 @@ sub cancel {
             value                  => $params,
         };
     } elsif ( $stage eq 'confirm' ) {
-        #TODO:
-        # _reset_incdocs_info($params->{request});
-        # actually enqueue the letter?
+        my $request = $params->{request};
+
+        my $incdocs     = Koha::Plugin::Com::PTFSEurope::IncDocs->new;
+        my $config      = eval { decode_json( $incdocs->retrieve_data("incdocs_config") // {} ) };
+        my $letter_code = $config->{cancel_email_template};
+
+        unless ($letter_code) {
+            return {
+                error                  => 1,
+                message                => "Cancel email template configuration not found.",
+                method                 => 'cancel',
+                stage                  => 'confirm',
+                value                  => $params,
+                illLendingLibraryEmail => $illLendingLibraryEmail->value,
+            };
+        }
+
+        my $library = Koha::Libraries->find( $request->branchcode );
+        my $patron  = $request->borrowernumber ? Koha::Patrons->find( $request->borrowernumber ) : undef;
+
+        my $letter;
+        eval {
+            $letter = $request->get_notice(
+                {
+                    notice_code => $letter_code,
+                    transport   => 'email'
+                }
+            );
+        };
+
+
+        unless ($letter) {
+            return {
+                error   => 1,
+                message => "Notice template '$letter_code' not found",
+                method  => 'cancel',
+                stage   => 'confirm',
+                value   => $params,
+                illLendingLibraryEmail => $illLendingLibraryEmail->value,
+            };
+        }
+
+        C4::Letters::EnqueueLetter(
+            {
+                letter                 => $letter,
+                from_address           => $library->from_email_address,
+                to_address             => $illLendingLibraryEmail->value,
+                message_transport_type => 'email',
+                $patron ? ( borrowernumber => $patron->borrowernumber ) : (),
+            }
+        );
+
+        Koha::ILL::Request::Logger->new->log_patron_notice(
+            {
+                request     => $request,
+                notice_code => $letter_code
+            }
+        );
+
+        $request->status('CANCREQ');
+        _reset_incdocs_info($request);
+
         return {
             method => 'cancel',
             stage  => 'commit',
