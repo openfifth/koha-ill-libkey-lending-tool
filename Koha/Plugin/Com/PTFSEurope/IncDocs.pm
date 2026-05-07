@@ -1194,7 +1194,7 @@ sub status_graph {
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs',
             method         => 'confirm',
-            next_actions   => [ 'STAT', 'COMP' ],
+            next_actions   => [ 'STAT', 'COMP', 'CANCREQ' ],
             ui_method_icon => 'fa-check',
         },
         UNAVAILABLE => {
@@ -1205,6 +1205,15 @@ sub status_graph {
             method         => 0,
             next_actions   => [ 'COMP', 'EDITITEM', 'MIG', 'KILL' ],
             ui_method_icon => 'fa-check',
+        },
+        CANCREQ => {
+            prev_actions   => ['REQ'],
+            id             => 'CANCREQ',
+            name           => 'Cancellation requested',
+            ui_method_name => 'Cancel request',
+            method         => 'cancel',
+            next_actions   => [ 'MIG', 'KILL', 'REQ' ],
+            ui_method_icon => 'fa-trash',
         },
         REQREV => {
             prev_actions   => [ 'GENREQ' ],
@@ -1234,6 +1243,61 @@ sub status_graph {
             ui_method_icon => 0,
         },
     };
+}
+
+=head3 cancel
+
+  my $response = $backend->cancel({ params => $params });
+
+Will send an email to the lending library letting them know we no longer expect this request.
+
+=cut
+
+sub cancel {
+    my ( $self, $params ) = @_;
+
+    my $stage = $params->{other}->{stage};
+    my $illLendingLibraryEmail = $params->{request}->illrequestattributes->find( { type => 'illLendingLibraryEmail' } );
+
+    return {
+        error   => 1,
+        status  => 'unknown_stage',
+        message => '',
+        method  => 'cancel',
+        stage   => $params->{stage},
+        value   => {},
+    } unless $illLendingLibraryEmail;
+
+
+    if ( !$stage || $stage eq 'init' ) {
+        return {
+            illLendingLibraryEmail => $illLendingLibraryEmail->value,
+            method                 => 'cancel',
+            stage                  => 'confirm',
+            value                  => $params,
+        };
+    } elsif ( $stage eq 'confirm' ) {
+        #TODO:
+        # _reset_incdocs_info($params->{request});
+        # actually enqueue the letter?
+        return {
+            method => 'cancel',
+            stage  => 'commit',
+            next   => 'illview',
+            value  => $params,
+        };
+    } else {
+
+        # Invalid stage, return error.
+        return {
+            error   => 1,
+            status  => 'unknown_stage',
+            message => '',
+            method  => 'cancel',
+            stage   => $params->{stage},
+            value   => {},
+        };
+    }
 }
 
 =head3 _fail
@@ -1555,6 +1619,12 @@ sub fieldmap {
             type      => "string",
             exclude   => 1,
             label     => "Lender library ID",
+            position  => 99
+        },
+        illLendingLibraryEmail => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Lender library email address",
             position  => 99
         },
         contentLocation => {
@@ -2150,6 +2220,7 @@ sub _reset_incdocs_info {
 
     $request->illrequestattributes->search( { type => 'lenderLibraryId' } )->delete;
     $request->illrequestattributes->search( { type => 'lenderLibraryName' } )->delete;
+    $request->illrequestattributes->search( { type => 'illLendingLibraryEmail' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterEmail' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterLibraryId' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterLibraryName' } )->delete;

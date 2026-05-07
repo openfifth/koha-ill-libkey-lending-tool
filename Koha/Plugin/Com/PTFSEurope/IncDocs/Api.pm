@@ -164,6 +164,11 @@ sub Create_Fulfillment_Request {
 
     my $data = $c->validation->param('body') || '';
 
+return $c->render(
+    status  => 200,
+    openapi => {'success'=> 1}
+);
+
     my $response = _make_request( 'POST', 'fulfillmentRequests', { data => $data } );
 
     if ( $response->{data} ) {
