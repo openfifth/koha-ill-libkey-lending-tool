@@ -1,0 +1,16 @@
+Dear [% illrequestattributes.lenderLibraryName %],
+
+We are writing to inform you that we no longer require the following article request and would like to cancel it.
+
+[% IF illrequestattributes.title %]Title: [% illrequestattributes.title %][% END %]
+[% IF illrequestattributes.article_title %]Article title: [% illrequestattributes.article_title %][% END %]
+[% IF illrequestattributes.doi %]DOI: [% illrequestattributes.doi %][% END %]
+[% IF illrequestattributes.issn %]ISSN: [% illrequestattributes.issn %][% END %]
+[% IF illrequest.orderid %]IncDocs request ID: [% illrequest.orderid %][% END %]
+
+We apologise for any inconvenience caused.
+
+Kind regards,
+
+[% branches.branchname %]
+[% branches.branchillemail || branches.branchemail %]

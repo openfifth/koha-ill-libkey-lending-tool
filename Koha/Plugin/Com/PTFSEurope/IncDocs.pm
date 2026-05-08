@@ -1194,7 +1194,7 @@ sub status_graph {
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs',
             method         => 'confirm',
-            next_actions   => [ 'STAT', 'COMP' ],
+            next_actions   => [ 'STAT', 'COMP', 'CANCREQ' ],
             ui_method_icon => 'fa-check',
         },
         UNAVAILABLE => {
@@ -1205,6 +1205,15 @@ sub status_graph {
             method         => 0,
             next_actions   => [ 'COMP', 'EDITITEM', 'MIG', 'KILL' ],
             ui_method_icon => 'fa-check',
+        },
+        CANCREQ => {
+            prev_actions   => ['REQ'],
+            id             => 'CANCREQ',
+            name           => 'Cancellation requested',
+            ui_method_name => 'Cancel request',
+            method         => 'cancel',
+            next_actions   => [ 'MIG', 'KILL', 'REQ' ],
+            ui_method_icon => 'fa-trash',
         },
         REQREV => {
             prev_actions   => [ 'GENREQ' ],
@@ -1234,6 +1243,123 @@ sub status_graph {
             ui_method_icon => 0,
         },
     };
+}
+
+=head3 cancel
+
+  my $response = $backend->cancel({ params => $params });
+
+Will send an email to the lending library letting them know we no longer expect this request.
+
+=cut
+
+sub cancel {
+    my ( $self, $params ) = @_;
+
+    my $stage = $params->{other}->{stage};
+    my $illLendingLibraryEmail = $params->{request}->illrequestattributes->find( { type => 'illLendingLibraryEmail' } );
+
+    return {
+        error   => 1,
+        status  => 'unknown_stage',
+        message => '',
+        method  => 'cancel',
+        stage   => $params->{stage},
+        value   => {},
+    } unless $illLendingLibraryEmail;
+
+
+    if ( !$stage || $stage eq 'init' ) {
+        return {
+            illLendingLibraryEmail => $illLendingLibraryEmail->value,
+            method                 => 'cancel',
+            stage                  => 'confirm',
+            value                  => $params,
+        };
+    } elsif ( $stage eq 'confirm' ) {
+        my $request = $params->{request};
+
+        my $incdocs     = Koha::Plugin::Com::PTFSEurope::IncDocs->new;
+        my $config      = eval { decode_json( $incdocs->retrieve_data("incdocs_config") // {} ) };
+        my $letter_code = $config->{cancel_email_template};
+
+        unless ($letter_code) {
+            return {
+                error                  => 1,
+                message                => "Cancel email template configuration not found.",
+                method                 => 'cancel',
+                stage                  => 'confirm',
+                value                  => $params,
+                illLendingLibraryEmail => $illLendingLibraryEmail->value,
+            };
+        }
+
+        my $library = Koha::Libraries->find( $request->branchcode );
+        my $patron  = $request->borrowernumber ? Koha::Patrons->find( $request->borrowernumber ) : undef;
+
+        my $letter;
+        eval {
+            $letter = $request->get_notice(
+                {
+                    notice_code => $letter_code,
+                    transport   => 'email'
+                }
+            );
+        };
+
+
+        unless ($letter) {
+            return {
+                error   => 1,
+                message => "Notice template '$letter_code' not found",
+                method  => 'cancel',
+                stage   => 'confirm',
+                value   => $params,
+                illLendingLibraryEmail => $illLendingLibraryEmail->value,
+            };
+        }
+
+        C4::Letters::EnqueueLetter(
+            {
+                letter                 => $letter,
+                from_address           => $library->from_email_address,
+                to_address             => $illLendingLibraryEmail->value,
+                message_transport_type => 'email',
+                $patron ? ( borrowernumber => $patron->borrowernumber ) : (),
+            }
+        );
+
+        Koha::ILL::Request::Logger->new->log_patron_notice(
+            {
+                request     => $request,
+                notice_code => $letter_code
+            }
+        );
+
+        my $lender_id = $request->extended_attributes->find( { type => 'lenderLibraryId' } );
+        _add_to_declined_list( $request, $lender_id->value ) if $lender_id;
+
+        $request->status('CANCREQ');
+        _reset_incdocs_info($request);
+
+        return {
+            method => 'cancel',
+            stage  => 'commit',
+            next   => 'illview',
+            value  => $params,
+        };
+    } else {
+
+        # Invalid stage, return error.
+        return {
+            error   => 1,
+            status  => 'unknown_stage',
+            message => '',
+            method  => 'cancel',
+            stage   => $params->{stage},
+            value   => {},
+        };
+    }
 }
 
 =head3 _fail
@@ -1557,6 +1683,12 @@ sub fieldmap {
             label     => "Lender library ID",
             position  => 99
         },
+        illLendingLibraryEmail => {
+            type      => "string",
+            exclude   => 1,
+            label     => "Lender library email address",
+            position  => 99
+        },
         contentLocation => {
             type      => "string",
             exclude   => 1,
@@ -1841,7 +1973,7 @@ sub availability {
     my $result = $incdocs->{_api}
         ->Backend_Availability( { incdocs_id => $incdocs_id_to_use, metadata => $metadata, forceIll => $forceIll } );
 
-    if ( $request->status eq 'REQREV' ) {
+    if ( $request->status eq 'REQREV' || $request->status eq 'CANCREQ' ) {
         my $declined_lenderLibraryId_list =
             $params->{request}->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } );
 
@@ -2155,6 +2287,7 @@ sub _reset_incdocs_info {
 
     $request->illrequestattributes->search( { type => 'lenderLibraryId' } )->delete;
     $request->illrequestattributes->search( { type => 'lenderLibraryName' } )->delete;
+    $request->illrequestattributes->search( { type => 'illLendingLibraryEmail' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterEmail' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterLibraryId' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterLibraryName' } )->delete;
