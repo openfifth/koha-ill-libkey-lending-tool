@@ -1976,24 +1976,7 @@ sub status {
             $note .= " decline reason: $result->{declinedReason}";
             $request->append_to_note($note);
 
-            my $declined_lenderLibraryId_list =
-                $params->{request}->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } );
-
-            my $list = '';
-            if ($declined_lenderLibraryId_list) {
-                $list = $declined_lenderLibraryId_list->value;
-                $params->{request}->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } )->delete;
-            }
-
-            my @declined_lenderLibraryId_array = split( /\|/, $list );
-
-            my $library_id = $result->{lenderLibraryId};
-            unless ( grep { $_ eq $library_id } @declined_lenderLibraryId_array ) {
-                push @declined_lenderLibraryId_array, $library_id;
-            }
-            my $string = join "|", @declined_lenderLibraryId_array;
-
-            $request->add_or_update_attributes( { declined_lenderLibraryId_list => $string } );
+            _add_to_declined_list( $params->{request}, $result->{lenderLibraryId} );
         }
 
         # Log the outcome
@@ -2137,6 +2120,28 @@ sub incdocs_api_response_to_request {
     }
 
     return $params;
+}
+
+=head3 _add_to_declined_list
+
+Add a lender library ID to the request's declined lender list, avoiding duplicates.
+
+=cut
+
+sub _add_to_declined_list {
+    my ( $request, $library_id ) = @_;
+
+    return unless $library_id;
+
+    my $attr = $request->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } );
+    my $list = $attr ? $attr->value : '';
+    $attr->delete if $attr;
+
+    my @declined = split( /\|/, $list );
+    unless ( grep { $_ eq $library_id } @declined ) {
+        push @declined, $library_id;
+    }
+    $request->add_or_update_attributes( { declined_lenderLibraryId_list => join( '|', @declined ) } );
 }
 
 =head3 _reset_incdocs_info
