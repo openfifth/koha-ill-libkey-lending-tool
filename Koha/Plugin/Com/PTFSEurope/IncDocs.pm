@@ -39,13 +39,13 @@ use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
-our $VERSION = "2.6.1";
+our $VERSION = "2.6.2";
 
 our $metadata = {
     name            => 'IncDocs',
     author          => 'Open Fifth',
     date_authored   => '2024-11-18',
-    date_updated    => "2026-05-08",
+    date_updated    => "2026-05-29",
     minimum_version => '25.11.00.000',
     maximum_version => undef,
     version         => $VERSION,
@@ -619,6 +619,7 @@ sub create_submission {
     $request->batch_id(
         $params->{other}->{ill_batch_id} ? $params->{other}->{ill_batch_id} : $params->{other}->{batch_id} );
     $request->backend( $self->name );
+    $request->notesopac( $params->{other}->{notesopac} ) if exists $params->{other}->{notesopac};
     $request->placed( DateTime->now );
     $request->updated( DateTime->now );
 
