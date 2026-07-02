@@ -1473,6 +1473,16 @@ sub create_api {
             other   => $body
         }
     );
+
+    if ( C4::Context->preference("ILLModuleUnmediated") ) {
+        $self->unmediated_confirm(
+            {
+                request => $submission,
+                other   => $body,
+            }
+        );
+    }
+
     return $submission;
 }
 
