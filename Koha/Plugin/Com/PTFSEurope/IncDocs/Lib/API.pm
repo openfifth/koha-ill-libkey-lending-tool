@@ -43,9 +43,9 @@ sub new {
 
     my $interface = C4::Context->interface;
     my $url =
-        $interface eq "intranet"
-        ? C4::Context->preference('staffClientBaseURL')
-        : C4::Context->preference('OPACBaseURL');
+        $interface eq "opac"
+        ? C4::Context->preference('OPACBaseURL')
+        : C4::Context->preference('staffClientBaseURL');
 
     # We need a URL to continue, otherwise we can't make the API call to
     # the IncDocs API plugin
