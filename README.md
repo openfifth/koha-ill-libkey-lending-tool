@@ -37,3 +37,30 @@ See [crontab.example](Koha/Plugin/Com/PTFSEurope/IncDocs/cron/crontab.example) f
 This is used to send an email to the patron with the link to the article.
 See [notice.example](Koha/Plugin/Com/PTFSEurope/IncDocs/docs/notice.example).
 This template notice must be created as an HTML message.
+
+## Batch article URLs report
+
+To enable the "Print article URLs for this batch" button on the batch request list page, create a saved SQL report in Koha with the following query and enter its report ID in the plugin configuration under **Batches options > Article URLs report ID**.
+
+The report takes a batch ID as its parameter and lists all requests in that batch that have a locally available article URL (i.e. requests completed via the 'found locally' path).
+
+```sql
+SELECT
+    ir.illrequest_id       AS "Request ID",
+    CONCAT(b.firstname, ' ', b.surname) AS "Patron",
+    b.email                AS "Patron email",
+    COALESCE(atitle.value, title.value) AS "Title",
+    author.value           AS "Author",
+    ir.accessurl           AS "Content URL"
+FROM illrequests ir
+LEFT JOIN borrowers b ON b.borrowernumber = ir.borrowernumber
+LEFT JOIN illrequestattributes atitle
+    ON atitle.illrequest_id = ir.illrequest_id AND atitle.type = 'article_title'
+LEFT JOIN illrequestattributes title
+    ON title.illrequest_id = ir.illrequest_id AND title.type = 'title'
+LEFT JOIN illrequestattributes author
+    ON author.illrequest_id = ir.illrequest_id AND author.type = 'article_author'
+WHERE ir.batch_id = <<Batch ID>>
+AND ir.accessurl IS NOT NULL AND ir.accessurl != ''
+ORDER BY ir.illrequest_id
+```

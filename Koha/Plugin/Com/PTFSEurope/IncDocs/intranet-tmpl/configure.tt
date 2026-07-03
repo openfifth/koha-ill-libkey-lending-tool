@@ -78,6 +78,13 @@
                     <div class="row">
                         <ol>
                             <li>
+                                <label for="incdocs_batch_urls_report_id_input">Article URLs report ID: </label>
+                                <input id="incdocs_batch_urls_report_id_input" type="text" name="batch_urls_report_id" value="[% config.batch_urls_report_id | html %]" size="10">
+                                <a href="#" data-bs-toggle="tooltip" title="The ID of the Koha saved report that lists article URLs for a batch. When set, a 'Print article URLs for this batch' button will appear on the batch request list page.">
+                                    <i class="fa-solid fa-circle-question"></i>
+                                </a>
+                            </li>
+                            <li>
                                 <label for="incdocs_batch_found_locally_complete_without_sending_input">'Found locally' requests created by batches are completed without sending article to the patron: </label>
                                 [% IF config.batch_found_locally_complete_without_sending %]
                                     <input id="incdocs_batch_found_locally_complete_without_sending_input" type="checkbox" checked name="batch_found_locally_complete_without_sending">

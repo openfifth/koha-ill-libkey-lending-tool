@@ -141,6 +141,37 @@ sub uninstall() {
     return 1;
 }
 
+sub intranet_js {
+    my ($self) = @_;
+
+    my $report_id = $self->{config}->{batch_urls_report_id};
+    return '' unless $report_id;
+
+    return <<"JS";
+<script>
+(function () {
+    var params = new URLSearchParams(window.location.search);
+    var batchId = params.get('batch_id');
+    if (!batchId || !window.location.pathname.endsWith('ill-requests.pl')) return;
+
+    var toolbar = document.querySelector('.btn-toolbar.ill-toolbar');
+    if (!toolbar) return;
+
+    var a = document.createElement('a');
+    a.setAttribute('class', 'btn btn-default');
+    a.setAttribute(
+        'href',
+        '/cgi-bin/koha/reports/guided_reports.pl?id=$report_id&param_name=Batch+ID&sql_params=' +
+            encodeURIComponent(batchId) +'&op=run'
+    );
+    a.setAttribute('target', '_blank');
+    a.innerHTML = '<i class="fa fa-print"></i> Print article URLs for this batch';
+    toolbar.appendChild(a);
+})();
+</script>
+JS
+}
+
 =head2 ILL availability methods
 
 =head3 availability_check_info
