@@ -74,6 +74,22 @@
                             </li>
                         </ol>
                     </div>
+                    <legend>Batches options</legend>
+                    <div class="row">
+                        <ol>
+                            <li>
+                                <label for="incdocs_batch_found_locally_complete_without_sending_input">'Found locally' requests created by batches are completed without sending article to the patron: </label>
+                                [% IF config.batch_found_locally_complete_without_sending %]
+                                    <input id="incdocs_batch_found_locally_complete_without_sending_input" type="checkbox" checked name="batch_found_locally_complete_without_sending">
+                                [% ELSE %]
+                                    <input id="incdocs_batch_found_locally_complete_without_sending_input" type="checkbox" name="batch_found_locally_complete_without_sending">
+                                [% END %]
+                                <a href="#" data-bs-toggle="tooltip" title="When enabled, batch-created requests found locally through IncDocs are completed immediately without sending the article to the patron">
+                                    <i class="fa-solid fa-circle-question"></i>
+                                </a>
+                            </li>
+                        </ol>
+                    </div>
                     <legend>Status alias</legend>
                     [% IF !status_aliases %]
                     <p>There are no status aliases configured. Click <a target="_blank" href="/cgi-bin/koha/admin/authorised_values.pl?searchfield=ILL_STATUS_ALIAS">here</a> to add</p>

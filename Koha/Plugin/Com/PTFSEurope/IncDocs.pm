@@ -735,7 +735,9 @@ sub create_request {
     my $requesterEmail;
     if ( !$submission->{other}->{lenderLibraryId} && $submission->{other}->{contentLocation} ) {
 
-        if ( $submission->{other}->{complete_without_sending} ){
+        if ( $submission->{other}->{complete_without_sending}
+            || ( $request->batch_id && $config->{batch_found_locally_complete_without_sending} ) )
+        {
             $self->found_locally_complete( $request, $requesterLibraryId, $submission->{other}->{contentLocation} );
             return {
                 error   => 0,
