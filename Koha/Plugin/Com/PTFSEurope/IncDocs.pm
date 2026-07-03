@@ -1936,6 +1936,24 @@ sub template_include_paths {
     ];
 }
 
+sub _incdocs_api_availability {
+    my ( $incdocs_id, $id_code, $id_value, $forceIll ) = @_;
+    require Koha::Plugin::Com::PTFSEurope::IncDocs::Api;
+    my $raw = Koha::Plugin::Com::PTFSEurope::IncDocs::Api::_make_request(
+        'GET',
+        'libraries/' . $incdocs_id . '/articles/' . $id_code . '/' . $id_value,
+        undef,
+        $forceIll
+    );
+    if (
+        ( $raw->{error} && ref $raw->{error} eq 'ARRAY' && grep { $_->{status} == 404 } @{ $raw->{error} } )
+        || ( !$raw->{data}->{illLibraryName} && !$raw->{data}->{contentLocation} )
+    ) {
+        return { error => 'Provided doi or pubmedid is not available in IncDocs' };
+    }
+    return { response => $raw, success => 1 };
+}
+
 sub availability {
     my ( $self, $params ) = @_;
 
@@ -1952,39 +1970,43 @@ sub availability {
 
     my $incdocs_id_to_use = $params->{other}->{incdocs_id} // $incdocs_ids->next->value;
 
-    my $incdocs =
-        Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend( { logger => Koha::ILL::Request::Logger->new } );
-    my $incdocs_libraries = $incdocs->{_api}->Libraries();
-    $incdocs_libraries = $incdocs_libraries->{data};
+    if ( C4::Context->interface eq 'intranet' ) {
+        my $incdocs =
+            Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend( { logger => Koha::ILL::Request::Logger->new } );
+        my $incdocs_libraries = $incdocs->{_api}->Libraries()->{data};
 
-    if ( $incdocs_ids->count > 1 ) {
-        my @other_candidates;
-        my @other_ids = grep { $_ ne $incdocs_id_to_use } map { $_->value } $incdocs_ids->as_list;
-        foreach my $incdocs_library (@$incdocs_libraries) {
-            # Set other candidate IDs
-            push @other_candidates,
-                map { { id => $_, name => $incdocs_library->{name} } }
-                grep { $_ eq $incdocs_library->{id} } @other_ids;
+        if ( $incdocs_ids->count > 1 ) {
+            my @other_candidates;
+            my @other_ids = grep { $_ ne $incdocs_id_to_use } map { $_->value } $incdocs_ids->as_list;
+            foreach my $incdocs_library (@$incdocs_libraries) {
+                push @other_candidates,
+                    map { { id => $_, name => $incdocs_library->{name} } }
+                    grep { $_ eq $incdocs_library->{id} } @other_ids;
+            }
+            $response->{other_incdocs_id_candidates} = \@other_candidates if @other_candidates;
         }
-        $response->{other_incdocs_id_candidates} = \@other_candidates if @other_candidates;
+        ( $response->{incdocs_id_utilized} ) = grep { $_->{id} eq $incdocs_id_to_use } @$incdocs_libraries;
     }
-    # Set current utilized ID
-    ( $response->{incdocs_id_utilized} ) = grep { $_->{id} eq $incdocs_id_to_use } @$incdocs_libraries;
 
-    my $metadata = {
-        branchcode => $params->{request}->branchcode,
-        ( $params->{request}->extended_attributes->find( { type => 'doi' } ) )
-        ? ( doi => $params->{request}->extended_attributes->find( { type => 'doi' } )->value )
-        : (),
-        ( $params->{request}->extended_attributes->find( { type => 'pubmedid' } ) )
-        ? ( pubmedid => $params->{request}->extended_attributes->find( { type => 'pubmedid' } )->value )
-        : (),
-    };
+    my $doi_attr  = $params->{request}->extended_attributes->find( { type => 'doi' } );
+    my $pmid_attr = $params->{request}->extended_attributes->find( { type => 'pubmedid' } );
 
-    $metadata = Koha::ILL::Request::Workflow->new->prep_metadata($metadata);
+    unless ( $doi_attr || $pmid_attr ) {
+        $response->{backend_availability}->{error} = 'No doi or pubmedid provided';
+        $response->{illrequest_id} = $request->illrequest_id;
+        return $response;
+    }
 
-    my $result = $incdocs->{_api}
-        ->Backend_Availability( { incdocs_id => $incdocs_id_to_use, metadata => $metadata, forceIll => $forceIll } );
+    my $id_code   = $doi_attr ? 'doi' : 'pmid';
+    my $id_value;
+    if ($doi_attr) {
+        $id_value = $doi_attr->value =~ s/^\s+|\s+$//gr;
+        $id_value =~ s/.*?(?=10\.)//;
+    } else {
+        $id_value = $pmid_attr->value =~ s/^\s+|\s+$//gr;
+    }
+
+    my $result = _incdocs_api_availability( $incdocs_id_to_use, $id_code, $id_value, $forceIll );
 
     if ( $request->status eq 'REQREV' || $request->status eq 'CANCREQ' ) {
         my $declined_lenderLibraryId_list =
@@ -1996,7 +2018,7 @@ sub availability {
             while ( grep( { $result->{response}->{data}->{illLibraryId} eq $_ } @declined_lenderLibraryId_array )
                 && $api_calls < 15 )
             {
-                $result = $incdocs->{_api}->Backend_Availability( { metadata => $metadata, forceIll => $forceIll } );
+                $result = _incdocs_api_availability( $incdocs_id_to_use, $id_code, $id_value, $forceIll );
                 $api_calls++;
             }
 
@@ -2213,9 +2235,6 @@ sub unmediated_confirm {
 
     my $availability = $self->availability($params);
 
-    $params->{other} = { %{ $availability->{backend_availability}->{response}->{data} }, %{ $params->{other} } };
-    $params->{other} = incdocs_api_response_to_request( $params->{other} );
-
     if (   $availability->{backend_availability}->{error}
         && $availability->{backend_availability}->{error} eq 'Provided doi or pubmedid is not available in IncDocs' )
     {
@@ -2238,6 +2257,7 @@ sub unmediated_confirm {
             %{ $params->{other} || {} },
             %{ $availability->{backend_availability}->{response}->{data} || {} }
         };
+        $params->{other} = incdocs_api_response_to_request( $params->{other} );
     }
 
     return $self->create_request($params);
