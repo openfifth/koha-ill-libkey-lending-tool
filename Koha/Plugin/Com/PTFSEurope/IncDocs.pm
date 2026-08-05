@@ -767,7 +767,8 @@ sub create_request {
     if ( !$submission->{other}->{lenderLibraryId} && $submission->{other}->{contentLocation} ) {
 
         if ( $submission->{other}->{complete_without_sending}
-            || ( $request->batch_id && $config->{batch_found_locally_complete_without_sending} ) )
+            || ( $request->batch_id && $config->{batch_found_locally_complete_without_sending} )
+            || ( $submission->{other}->{unmediated} && $config->{unmediated_found_locally_complete_without_sending} ) )
         {
             $self->found_locally_complete( $request, $requesterLibraryId, $submission->{other}->{contentLocation} );
             return {
@@ -2290,6 +2291,9 @@ sub unmediated_confirm {
         };
         $params->{other} = incdocs_api_response_to_request( $params->{other} );
     }
+
+    # Lets create_request() apply the unmediated found-locally email skip.
+    $params->{other}->{unmediated} = 1;
 
     return $self->create_request($params);
 }
