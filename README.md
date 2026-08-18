@@ -51,7 +51,7 @@ SELECT
     b.email                AS "Patron email",
     COALESCE(atitle.value, title.value) AS "Title",
     author.value           AS "Author",
-    ir.accessurl           AS "Content URL"
+    CONCAT('<a href=\"', ir.accessurl,'\">', ir.accessurl, '</a>') AS "Content URL"
 FROM illrequests ir
 LEFT JOIN borrowers b ON b.borrowernumber = ir.borrowernumber
 LEFT JOIN illrequestattributes atitle
