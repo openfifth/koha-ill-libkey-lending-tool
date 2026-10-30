@@ -10,176 +10,186 @@
                 <div class="alert alert-info">Configuration saved</div>
             [% END %]
             <form id="IncDocs_configure" method="get">
-                <fieldset class="rows">
-                    <legend>API request details</legend>
-                    <div class="row">
-                        <ol>
-                            <input type="hidden" name="class" value="[% CLASS %]"/>
-                            <input type="hidden" name="method" value="[% METHOD %]"/>
-                            <li>
-                                <label for="IncDocs_access_token_input">Access token: </label>
-                                <input id="IncDocs_access_token_input" class="required_input" placeholder="Enter access token" type="text" name="access_token" value="[% config.access_token | html %]" size="35">
-                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The access token to be used for accessing the LibKey Lending Tool (IncDocs) API"><i class="fa-solid fa-circle-question"></i></a>
-                            </li>
-                            <li>
-                                <label for="IncDocs_library_group_input">Library group: </label>
-                                <input id="IncDocs_library_group_input" class="required_input" placeholder="Enter library group" type="text" name="library_group" value="[% config.library_group | html %]" size="35">
-                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The library group to be used for accessing the IncDocs API"><i class="fa-solid fa-circle-question"></i></a>
-                            </li>
-                            <li>
-                                <label for="IncDocs_payload_customreference_input">Custom reference: </label>
-                                <input id="IncDocs_payload_customreference_input" class="required_input" placeholder="PTFS-Europe TEST - DO NOT FULFILL" type="text" name="payload_customreference" value="[% config.payload_customreference | html %]" size="35">
-                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The hardcoded customReference to be sent when placing the request. Otherwise, Koha's ILL request ID is sent as reference"><i class="fa-solid fa-circle-question"></i></a>
-                            </li>
-                            <li>
-                                <label for="IncDocs_payload_requesteremail_input">Fallback requester email: </label>
-                                <input id="IncDocs_payload_requesteremail_input" class="required_input" placeholder="developers@ptfs-europe.com" type="text" name="payload_requesteremail" value="[% config.payload_requesteremail | html %]" size="35">
-                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The requesterEmail to be sent if the patron's email is not available when placing the request."><i class="fa-solid fa-circle-question"></i></a>
-                            </li>
-                        </ol>
-                    </div>
-                    <legend>Additional fields</legend>
-                    <div class="row">
-                        <ol>
-                            <li>
-                                <label for="incdocs_library_libraryidfield_input"><strong>IncDocs Library ID</strong> field for library records: </label>
-                                <input id="incdocs_library_libraryidfield_input" class="required_input" placeholder="Enter library additional field code" type="text" name="library_libraryidfield" value="[% config.library_libraryidfield | html %]" size="35">
-                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The Koha library additional field code used to match the library record with the IncDocs library id field."><i class="fa-solid fa-circle-question"></i></a>
-                            </li>
-                        </ol>
-                    </div>
-                    <legend>'Found locally' options</legend>
-                    <div class="row">
-                        <ol>
-                            <li>
-                                <label for="incdocs_requesting_library_email_template_input">Template notice to use when article is found locally: </label>
-                                <input id="incdocs_requesting_library_email_template_input" class="required_input" placeholder="Enter template notice code" type="text" name="requesting_library_email_template" value="[% config.requesting_library_email_template | html %]" size="35">
-                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The template notice code e.g. 'ILL_INCDOCS_LOCALLY'"><i class="fa-solid fa-circle-question"></i></a>
-                            </li>
-                            <li>
-                                <label for="incdocs_cancel_email_template_input">Template notice to use when cancelling request: </label>
-                                <input id="incdocs_cancel_email_template_input" class="required_input" placeholder="Enter template notice code" type="text" name="cancel_email_template" value="[% config.cancel_email_template | html %]" size="35">
-                                <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The template notice code e.g. 'ILL_INCDOCS_CANCEL'"><i class="fa-solid fa-circle-question"></i></a>
-                            </li>
-                            <li>
-                                <label for="incdocs_complete_without_sending_button_input">Show option to complete without sending article: </label>
-                                [% IF config.complete_without_sending_button %]
-                                    <input id="incdocs_complete_without_sending_button_input" class="required_input" type="checkbox" checked name="complete_without_sending_button">
-                                [% ELSE %]
-                                    <input id="incdocs_complete_without_sending_button_input" class="required_input" type="checkbox" name="complete_without_sending_button">
-                                [% END %]
-                                <a href="#" data-bs-toggle="tooltip" title="Enabling this will show a new button for locally found requests to complete the request but not send article to the patron">
-                                    <i class="fa-solid fa-circle-question"></i>
-                                </a>
-                            </li>
-                            <li>
-                                <label for="incdocs_unmediated_found_locally_complete_without_sending_input">'Found locally' unmediated requests are completed without sending article to the patron: </label>
-                                [% IF config.unmediated_found_locally_complete_without_sending %]
-                                    <input id="incdocs_unmediated_found_locally_complete_without_sending_input" type="checkbox" checked name="unmediated_found_locally_complete_without_sending">
-                                [% ELSE %]
-                                    <input id="incdocs_unmediated_found_locally_complete_without_sending_input" type="checkbox" name="unmediated_found_locally_complete_without_sending">
-                                [% END %]
-                                <a href="#" data-bs-toggle="tooltip" title="When enabled, unmediated requests found locally through IncDocs are completed immediately without sending the article to the patron">
-                                    <i class="fa-solid fa-circle-question"></i>
-                                </a>
-                            </li>
-                        </ol>
-                    </div>
-                    <legend>AutoILLBackendPriority options</legend>
-                    <div class="row">
-                        <ol>
-                            <li>
-                                <label for="incdocs_autoill_found_at_another_library_amber_input">Make 'Found at another library' an amber status: </label>
-                                [% IF config.autoill_found_at_another_library_amber %]
-                                    <input id="incdocs_autoill_found_at_another_library_amber_input" type="checkbox" checked name="autoill_found_at_another_library_amber">
-                                [% ELSE %]
-                                    <input id="incdocs_autoill_found_at_another_library_amber_input" type="checkbox" name="autoill_found_at_another_library_amber">
-                                [% END %]
-                                <a href="#" data-bs-toggle="tooltip" title="When enabled, articles found at another library are shown in amber instead of green. Staff can still pick IncDocs, but it is never pre-selected. Requires Koha with bug 41111">
-                                    <i class="fa-solid fa-circle-question"></i>
-                                </a>
-                            </li>
-                        </ol>
-                    </div>
-                    <legend>Batches options</legend>
-                    <div class="row">
-                        <ol>
-                            <li>
-                                <label for="incdocs_batch_urls_report_id_input">Article URLs report ID: </label>
-                                <input id="incdocs_batch_urls_report_id_input" type="text" name="batch_urls_report_id" value="[% config.batch_urls_report_id | html %]" size="10">
-                                <a href="#" data-bs-toggle="tooltip" title="The ID of the Koha saved report that lists article URLs for a batch. When set, a 'Print article URLs for this batch' button will appear on the batch request list page.">
-                                    <i class="fa-solid fa-circle-question"></i>
-                                </a>
-                            </li>
-                            <li>
-                                <label for="incdocs_batch_found_locally_complete_without_sending_input">'Found locally' requests created by batches are completed without sending article to the patron: </label>
-                                [% IF config.batch_found_locally_complete_without_sending %]
-                                    <input id="incdocs_batch_found_locally_complete_without_sending_input" type="checkbox" checked name="batch_found_locally_complete_without_sending">
-                                [% ELSE %]
-                                    <input id="incdocs_batch_found_locally_complete_without_sending_input" type="checkbox" name="batch_found_locally_complete_without_sending">
-                                [% END %]
-                                <a href="#" data-bs-toggle="tooltip" title="When enabled, batch-created requests found locally through IncDocs are completed immediately without sending the article to the patron">
-                                    <i class="fa-solid fa-circle-question"></i>
-                                </a>
-                            </li>
-                        </ol>
-                    </div>
-                    <legend>Status alias</legend>
-                    [% IF !status_aliases %]
-                    <p>There are no status aliases configured. Click <a target="_blank" href="/cgi-bin/koha/admin/authorised_values.pl?searchfield=ILL_STATUS_ALIAS">here</a> to add</p>
-                    [% ELSE %]
-                        <div class="row">
-                            <ol>
-                                <li>
-                                    <label for="incdocs_status_alias_locally_oa_input">Found locally through open access: </label>
-                                    <select name="status_alias_locally_oa">
-                                        [% FOREACH sa IN status_aliases %]
-                                            [% IF sa.authorised_value == config.status_alias_locally_oa %]
-                                                <option value="[% sa.authorised_value %]" selected="selected">[% sa.lib %]</option>
-                                            [% ELSE %]
-                                                <option value="[% sa.authorised_value %]">[% sa.lib %]</option>
-                                            [% END %]
+                <div class="row">
+                    <div class="col-lg-6">
+                        <fieldset class="rows">
+                            <legend>API request details</legend>
+                            <div class="row">
+                                <ol>
+                                    <input type="hidden" name="class" value="[% CLASS %]"/>
+                                    <input type="hidden" name="method" value="[% METHOD %]"/>
+                                    <li>
+                                        <label for="IncDocs_access_token_input">Access token: </label>
+                                        <input id="IncDocs_access_token_input" class="required_input" placeholder="Enter access token" type="text" name="access_token" value="[% config.access_token | html %]" size="35">
+                                        <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The access token to be used for accessing the LibKey Lending Tool (IncDocs) API"><i class="fa-solid fa-circle-question"></i></a>
+                                    </li>
+                                    <li>
+                                        <label for="IncDocs_library_group_input">Library group: </label>
+                                        <input id="IncDocs_library_group_input" class="required_input" placeholder="Enter library group" type="text" name="library_group" value="[% config.library_group | html %]" size="35">
+                                        <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The library group to be used for accessing the IncDocs API"><i class="fa-solid fa-circle-question"></i></a>
+                                    </li>
+                                    <li>
+                                        <label for="IncDocs_payload_customreference_input">Custom reference: </label>
+                                        <input id="IncDocs_payload_customreference_input" class="required_input" placeholder="PTFS-Europe TEST - DO NOT FULFILL" type="text" name="payload_customreference" value="[% config.payload_customreference | html %]" size="35">
+                                        <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The hardcoded customReference to be sent when placing the request. Otherwise, Koha's ILL request ID is sent as reference"><i class="fa-solid fa-circle-question"></i></a>
+                                    </li>
+                                    <li>
+                                        <label for="IncDocs_payload_requesteremail_input">Fallback requester email: </label>
+                                        <input id="IncDocs_payload_requesteremail_input" class="required_input" placeholder="developers@ptfs-europe.com" type="text" name="payload_requesteremail" value="[% config.payload_requesteremail | html %]" size="35">
+                                        <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The requesterEmail to be sent if the patron's email is not available when placing the request."><i class="fa-solid fa-circle-question"></i></a>
+                                    </li>
+                                </ol>
+                            </div>
+                            <legend>Additional fields</legend>
+                            <div class="row">
+                                <ol>
+                                    <li>
+                                        <label for="incdocs_library_libraryidfield_input"><strong>IncDocs Library ID</strong> field for library records: </label>
+                                        <input id="incdocs_library_libraryidfield_input" class="required_input" placeholder="Enter library additional field code" type="text" name="library_libraryidfield" value="[% config.library_libraryidfield | html %]" size="35">
+                                        <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The Koha library additional field code used to match the library record with the IncDocs library id field."><i class="fa-solid fa-circle-question"></i></a>
+                                    </li>
+                                </ol>
+                            </div>
+                            <legend>'Found locally' options</legend>
+                            <div class="row">
+                                <ol>
+                                    <li>
+                                        <label for="incdocs_requesting_library_email_template_input">Template notice to use when article is found locally: </label>
+                                        <input id="incdocs_requesting_library_email_template_input" class="required_input" placeholder="Enter template notice code" type="text" name="requesting_library_email_template" value="[% config.requesting_library_email_template | html %]" size="35">
+                                        <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The template notice code e.g. 'ILL_INCDOCS_LOCALLY'"><i class="fa-solid fa-circle-question"></i></a>
+                                    </li>
+                                    <li>
+                                        <label for="incdocs_cancel_email_template_input">Template notice to use when cancelling request: </label>
+                                        <input id="incdocs_cancel_email_template_input" class="required_input" placeholder="Enter template notice code" type="text" name="cancel_email_template" value="[% config.cancel_email_template | html %]" size="35">
+                                        <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The template notice code e.g. 'ILL_INCDOCS_CANCEL'"><i class="fa-solid fa-circle-question"></i></a>
+                                    </li>
+                                    <li>
+                                        <label for="incdocs_complete_without_sending_button_input">Show option to complete without sending article: </label>
+                                        [% IF config.complete_without_sending_button %]
+                                            <input id="incdocs_complete_without_sending_button_input" class="required_input" type="checkbox" checked name="complete_without_sending_button">
+                                        [% ELSE %]
+                                            <input id="incdocs_complete_without_sending_button_input" class="required_input" type="checkbox" name="complete_without_sending_button">
                                         [% END %]
-                                    </select>
-                                    <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The status alias that will be set for completed requests found locally through Open Access"><i class="fa-solid fa-circle-question"></i></a>
-                                </li>
-                            </ol>
-                        </div>
-                        <div class="row">
-                            <ol>
-                                <li>
-                                    <label for="incdocs_status_alias_locally_noa_input">Found locally not through open access: </label>
-                                    <select name="status_alias_locally_noa">
-                                        [% FOREACH sa IN status_aliases %]
-                                            [% IF sa.authorised_value == config.status_alias_locally_noa %]
-                                                <option value="[% sa.authorised_value %]" selected="selected">[% sa.lib %]</option>
-                                            [% ELSE %]
-                                                <option value="[% sa.authorised_value %]">[% sa.lib %]</option>
-                                            [% END %]
+                                        <a href="#" data-bs-toggle="tooltip" title="Enabling this will show a new button for locally found requests to complete the request but not send article to the patron">
+                                            <i class="fa-solid fa-circle-question"></i>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <label for="incdocs_unmediated_found_locally_complete_without_sending_input">'Found locally' unmediated requests are completed without sending article to the patron: </label>
+                                        [% IF config.unmediated_found_locally_complete_without_sending %]
+                                            <input id="incdocs_unmediated_found_locally_complete_without_sending_input" type="checkbox" checked name="unmediated_found_locally_complete_without_sending">
+                                        [% ELSE %]
+                                            <input id="incdocs_unmediated_found_locally_complete_without_sending_input" type="checkbox" name="unmediated_found_locally_complete_without_sending">
                                         [% END %]
-                                    </select>
-                                    <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The status alias that will be set for completed requests found locally not through Open Access"><i class="fa-solid fa-circle-question"></i></a>
-                                </li>
-                            </ol>
-                        </div>
-                        <div class="row">
-                            <ol>
-                                <li>
-                                    <label for="incdocs_status_alias_another_library_input">Found at another library: </label>
-                                    <select name="status_alias_another_library">
-                                        [% FOREACH sa IN status_aliases %]
-                                            [% IF sa.authorised_value == config.status_alias_another_library %]
-                                                <option value="[% sa.authorised_value %]" selected="selected">[% sa.lib %]</option>
-                                            [% ELSE %]
-                                                <option value="[% sa.authorised_value %]">[% sa.lib %]</option>
-                                            [% END %]
+                                        <a href="#" data-bs-toggle="tooltip" title="When enabled, unmediated requests found locally through IncDocs are completed immediately without sending the article to the patron">
+                                            <i class="fa-solid fa-circle-question"></i>
+                                        </a>
+                                    </li>
+                                </ol>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="col-lg-6">
+                        <fieldset class="rows">
+                            <legend>AutoILLBackendPriority options</legend>
+                            <div class="row">
+                                <ol>
+                                    <li>
+                                        <label for="incdocs_autoill_found_at_another_library_amber_input">Make 'Found at another library' an amber status: </label>
+                                        [% IF config.autoill_found_at_another_library_amber %]
+                                            <input id="incdocs_autoill_found_at_another_library_amber_input" type="checkbox" checked name="autoill_found_at_another_library_amber">
+                                        [% ELSE %]
+                                            <input id="incdocs_autoill_found_at_another_library_amber_input" type="checkbox" name="autoill_found_at_another_library_amber">
                                         [% END %]
-                                    </select>
-                                    <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The status alias that will be set for completed requests found at another library"><i class="fa-solid fa-circle-question"></i></a>
-                                </li>
-                            </ol>
-                        </div>
-                    [% END %]
+                                        <a href="#" data-bs-toggle="tooltip" title="When enabled, articles found at another library are shown in amber instead of green. Staff can still pick IncDocs, but it is never pre-selected. Requires Koha with bug 41111">
+                                            <i class="fa-solid fa-circle-question"></i>
+                                        </a>
+                                    </li>
+                                </ol>
+                            </div>
+                            <legend>Batches options</legend>
+                            <div class="row">
+                                <ol>
+                                    <li>
+                                        <label for="incdocs_batch_urls_report_id_input">Article URLs report ID: </label>
+                                        <input id="incdocs_batch_urls_report_id_input" type="text" name="batch_urls_report_id" value="[% config.batch_urls_report_id | html %]" size="10">
+                                        <a href="#" data-bs-toggle="tooltip" title="The ID of the Koha saved report that lists article URLs for a batch. When set, a 'Print article URLs for this batch' button will appear on the batch request list page.">
+                                            <i class="fa-solid fa-circle-question"></i>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <label for="incdocs_batch_found_locally_complete_without_sending_input">'Found locally' requests created by batches are completed without sending article to the patron: </label>
+                                        [% IF config.batch_found_locally_complete_without_sending %]
+                                            <input id="incdocs_batch_found_locally_complete_without_sending_input" type="checkbox" checked name="batch_found_locally_complete_without_sending">
+                                        [% ELSE %]
+                                            <input id="incdocs_batch_found_locally_complete_without_sending_input" type="checkbox" name="batch_found_locally_complete_without_sending">
+                                        [% END %]
+                                        <a href="#" data-bs-toggle="tooltip" title="When enabled, batch-created requests found locally through IncDocs are completed immediately without sending the article to the patron">
+                                            <i class="fa-solid fa-circle-question"></i>
+                                        </a>
+                                    </li>
+                                </ol>
+                            </div>
+                            <legend>Status alias</legend>
+                            [% IF !status_aliases %]
+                            <p>There are no status aliases configured. Click <a target="_blank" href="/cgi-bin/koha/admin/authorised_values.pl?searchfield=ILL_STATUS_ALIAS">here</a> to add</p>
+                            [% ELSE %]
+                                <div class="row">
+                                    <ol>
+                                        <li>
+                                            <label for="incdocs_status_alias_locally_oa_input">Found locally through open access: </label>
+                                            <select name="status_alias_locally_oa">
+                                                [% FOREACH sa IN status_aliases %]
+                                                    [% IF sa.authorised_value == config.status_alias_locally_oa %]
+                                                        <option value="[% sa.authorised_value %]" selected="selected">[% sa.lib %]</option>
+                                                    [% ELSE %]
+                                                        <option value="[% sa.authorised_value %]">[% sa.lib %]</option>
+                                                    [% END %]
+                                                [% END %]
+                                            </select>
+                                            <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The status alias that will be set for completed requests found locally through Open Access"><i class="fa-solid fa-circle-question"></i></a>
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="row">
+                                    <ol>
+                                        <li>
+                                            <label for="incdocs_status_alias_locally_noa_input">Found locally not through open access: </label>
+                                            <select name="status_alias_locally_noa">
+                                                [% FOREACH sa IN status_aliases %]
+                                                    [% IF sa.authorised_value == config.status_alias_locally_noa %]
+                                                        <option value="[% sa.authorised_value %]" selected="selected">[% sa.lib %]</option>
+                                                    [% ELSE %]
+                                                        <option value="[% sa.authorised_value %]">[% sa.lib %]</option>
+                                                    [% END %]
+                                                [% END %]
+                                            </select>
+                                            <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The status alias that will be set for completed requests found locally not through Open Access"><i class="fa-solid fa-circle-question"></i></a>
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="row">
+                                    <ol>
+                                        <li>
+                                            <label for="incdocs_status_alias_another_library_input">Found at another library: </label>
+                                            <select name="status_alias_another_library">
+                                                [% FOREACH sa IN status_aliases %]
+                                                    [% IF sa.authorised_value == config.status_alias_another_library %]
+                                                        <option value="[% sa.authorised_value %]" selected="selected">[% sa.lib %]</option>
+                                                    [% ELSE %]
+                                                        <option value="[% sa.authorised_value %]">[% sa.lib %]</option>
+                                                    [% END %]
+                                                [% END %]
+                                            </select>
+                                            <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The status alias that will be set for completed requests found at another library"><i class="fa-solid fa-circle-question"></i></a>
+                                        </li>
+                                    </ol>
+                                </div>
+                            [% END %]
+                        </fieldset>
+                    </div>
+                </div>
+                <fieldset class="action">
                     <input type="hidden" name="save" value="1" />
                     <input class="btn btn-primary" id="submit_button" type="submit" value="Save configuration" />
                 </fieldset>
