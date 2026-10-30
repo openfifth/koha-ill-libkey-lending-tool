@@ -31,7 +31,7 @@
 [% BLOCK inc_docs_sidebar %]
     <div class="col-md-2 order-sm-2 order-md-1">
         <aside>
-            <div id="menu">
+            <div id="incdocs-menu" class="sidebar_menu">
             <h5>IncDocs</h5>
                 <ul>
                 <li class="[% page == 'configuration' ? 'active' : '' %]">
