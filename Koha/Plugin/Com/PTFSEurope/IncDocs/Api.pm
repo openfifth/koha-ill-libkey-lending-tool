@@ -141,11 +141,12 @@ sub Backend_Availability {
     my $incdocs_id_name    = $incdocs_library ? $incdocs_library->{name} : undef;
 
     if ( $response && ref $response->{data} eq 'HASH' && $response->{data}->{illLibraryName} ) {
+        my $status = $config->{autoill_found_at_another_library_amber} ? 'warning' : 'success';
         return $c->render(
             status  => 200,
             openapi => {
                 response => $response,
-                success => "Found at another library. Requesting library: " . $incdocs_id_name . " (" . $incdocs_id_to_use . ")",
+                $status => "Found at another library. Requesting library: " . $incdocs_id_name . " (" . $incdocs_id_to_use . ")",
             }
         );
     } elsif ( $response && ref $response->{data} eq 'HASH' && !$response->{data}->{illLibraryName} && $response->{data}->{contentLocation} ) {

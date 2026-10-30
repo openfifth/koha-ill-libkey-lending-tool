@@ -85,6 +85,22 @@
                             </li>
                         </ol>
                     </div>
+                    <legend>AutoILLBackendPriority options</legend>
+                    <div class="row">
+                        <ol>
+                            <li>
+                                <label for="incdocs_autoill_found_at_another_library_amber_input">Make 'Found at another library' an amber status: </label>
+                                [% IF config.autoill_found_at_another_library_amber %]
+                                    <input id="incdocs_autoill_found_at_another_library_amber_input" type="checkbox" checked name="autoill_found_at_another_library_amber">
+                                [% ELSE %]
+                                    <input id="incdocs_autoill_found_at_another_library_amber_input" type="checkbox" name="autoill_found_at_another_library_amber">
+                                [% END %]
+                                <a href="#" data-bs-toggle="tooltip" title="When enabled, articles found at another library are shown in amber instead of green. Staff can still pick IncDocs, but it is never pre-selected. Requires Koha with bug 41111">
+                                    <i class="fa-solid fa-circle-question"></i>
+                                </a>
+                            </li>
+                        </ol>
+                    </div>
                     <legend>Batches options</legend>
                     <div class="row">
                         <ol>
