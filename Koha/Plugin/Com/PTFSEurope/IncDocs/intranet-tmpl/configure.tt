@@ -85,6 +85,17 @@
                                             <i class="fa-solid fa-circle-question"></i>
                                         </a>
                                     </li>
+                                    <li>
+                                        <label for="incdocs_unmediated_opac_found_locally_complete_input">Automatically complete 'Found locally' OPAC requests: </label>
+                                        [% IF config.unmediated_opac_found_locally_complete %]
+                                            <input id="incdocs_unmediated_opac_found_locally_complete_input" type="checkbox" checked name="unmediated_opac_found_locally_complete">
+                                        [% ELSE %]
+                                            <input id="incdocs_unmediated_opac_found_locally_complete_input" type="checkbox" name="unmediated_opac_found_locally_complete">
+                                        [% END %]
+                                        <a href="#" data-bs-toggle="tooltip" title="Requires ILLModuleUnmediated. When enabled, OPAC requests from logged in patrons that are found locally through IncDocs are completed automatically and the article is sent to the patron. If 'Found locally' unmediated requests are completed without sending article to the patron is also enabled, these requests are completed without sending the article. All other OPAC requests still need staff to process them">
+                                            <i class="fa-solid fa-circle-question"></i>
+                                        </a>
+                                    </li>
                                 </ol>
                             </div>
                         </fieldset>

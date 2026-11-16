@@ -2263,9 +2263,17 @@ and placing the fulfilment request directly.
 sub unmediated_confirm {
     my ( $self, $params ) = @_;
 
-    return if $params->{other}->{opac};
+    my $opac = $params->{other}->{opac};
+    return
+        if $opac
+        && ( !$self->{config}->{unmediated_opac_found_locally_complete} || !$params->{request}->borrowernumber );
 
     my $availability = $self->availability($params);
+
+    if ($opac) {
+        my $data = $availability->{backend_availability}->{response}->{data} || {};
+        return unless $data->{contentLocation} && !$data->{illLibraryId};
+    }
 
     if (   $availability->{backend_availability}->{error}
         && $availability->{backend_availability}->{error} eq 'Provided doi or pubmedid is not available in IncDocs' )
