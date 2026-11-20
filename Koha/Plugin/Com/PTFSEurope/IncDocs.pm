@@ -1126,6 +1126,53 @@ sub _iso18626_request_body {
     };
 }
 
+=head3 _handle_supplying_agency_message
+
+    $self->_handle_supplying_agency_message( { request => $request, message => $message } );
+
+Update C<$request> from a supplyingAgencyMessage Koha received from the supplying agency it was
+sent to. CopyCompleted completes the request, with the document URL as its access URL. Unfilled
+declines it, so it can be requested again from another library.
+
+=cut
+
+sub _handle_supplying_agency_message {
+    my ( $self, $params ) = @_;
+
+    my $request = $params->{request};
+    my $message = $params->{message};
+
+    if ( my $supplying_agency_request_id = $message->{header}->{supplyingAgencyRequestId} ) {
+        $request->orderid($supplying_agency_request_id)->store;
+    }
+
+    return 1 unless $request->status eq 'REQ';
+
+    my $status = $message->{statusInfo}->{status} // '';
+    if ( $status eq 'CopyCompleted' ) {
+        $request->accessurl( $message->{deliveryInfo}->{URL} ) if $message->{deliveryInfo}->{URL};
+        $request->status('COMP');
+        $request->completed( dt_from_string() );
+        $self->_set_auto_status_alias($request);
+        $request->store;
+    } elsif ( $status eq 'Unfilled' ) {
+        my $lender_id   = $request->extended_attributes->find( { type => 'lenderLibraryId' } );
+        my $lender_name = $request->extended_attributes->find( { type => 'lenderLibraryName' } );
+        my $reason      = join ', ',
+            grep { defined && length } $message->{messageInfo}->{reasonUnfilled}, $message->{messageInfo}->{note};
+
+        $request->status('REQREV');
+        my $note = 'IncDocs library ID ' . ( $lender_id ? $lender_id->value : '' );
+        $note .= ' (' . $lender_name->value . ')' if $lender_name;
+        $note .= " decline reason: $reason";
+        $request->append_to_note($note);
+
+        _add_to_declined_list( $request, $lender_id->value ) if $lender_id;
+    }
+
+    return 1;
+}
+
 =head3 confirm
 
 A wrapper around create_request allowing us to
@@ -1261,6 +1308,9 @@ sub capabilities {
 
         # We send ISO18626 requests to Koha's supplying agencies
         iso18626_requesting => sub { return 1; },
+
+        # Koha passes on the supplyingAgencyMessages it receives for our requests
+        iso18626_supplying_agency_message => sub { $self->_handle_supplying_agency_message(@_) },
     };
 
     return $capabilities->{$name};
