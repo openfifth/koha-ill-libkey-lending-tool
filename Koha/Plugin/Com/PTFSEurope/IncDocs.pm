@@ -917,24 +917,41 @@ sub create_request {
             value   => {}
         };
     }
-    $requesterEmail = $library ? $library->inbound_ill_address : $config->{payload_requesteremail};
+    my $lenderLibraryId   = $submission->{other}->{lenderLibraryId};
+    my $lenderLibraryName = $submission->{other}->{lenderLibraryName};
+    my $send_error;
 
-    # Make the request with IncDocs Lending Tool via the koha-plugin-IncDocs API
-    my $result = $incdocs_api->Create_Fulfillment_Request(
+    my $supplying_agency = $self->_lender_supplying_agency($lenderLibraryId);
+    if ( !_core_supports_requesting() ) {
+        $send_error = "Error: This Koha version cannot send ISO18626 requests";
+    } elsif ( !$supplying_agency ) {
+        $send_error = sprintf(
+            "Error: No supplying agency is set for IncDocs library %s%s",
+            $lenderLibraryId, $lenderLibraryName ? " ($lenderLibraryName)" : ''
+        );
+    } else {
+        my $result = Koha::ILL::ISO18626::Requester->send_request(
+            {
+                illrequest       => $request,
+                supplying_agency => $supplying_agency,
+                request          => $self->_iso18626_request_body(
+                    $request, _lender_content_location( $lenderLibraryId, $request )
+                ),
+            }
+        );
+        $send_error = "Error: $result->{error}" unless $result->{success};
+    }
+
+    $request->add_or_update_attributes(
         {
-            articleId          => $submission->{other}->{articleId},
-            customReference    => $config->{payload_customreference} || $request->id_prefix.$request->illrequest_id,
-            lenderLibraryId    => $submission->{other}->{lenderLibraryId},
-            requesterEmail     => $requesterEmail,
+            lenderLibraryId => $lenderLibraryId,
+            $lenderLibraryName ? ( lenderLibraryName => $lenderLibraryName ) : (),
             requesterLibraryId => $requesterLibraryId,
-            type               => 'fulfillment-requests'
         }
     );
 
-    if ( $result->{error} ) {
-        my $error_string = join ', ',
-            map { "IncDocs returned error: $_->{title} (status: $_->{status})" } @{ $result->{error} };
-        $request->append_to_note($error_string);
+    if ($send_error) {
+        $request->append_to_note($send_error);
         $request->status('ERROR')->store;
         return {
             error   => 0,
@@ -947,27 +964,6 @@ sub create_request {
         };
     }
 
-    if ( $result->{errors} ) {
-        my $error_string = join ', ',
-            map { "IncDocs returned error: $_->{message} (path: $_->{path})" } @{ $result->{errors} };
-        $request->append_to_note($error_string);
-        $request->status('ERROR')->store;
-        return {
-            error   => 0,
-            status  => '',
-            message => '',
-            method  => 'confirm',
-            stage   => 'commit',
-            next    => 'illview',
-            value   => {}
-        };
-    }
-
-    $result->{incdocs_type} = delete $result->{type};
-    $result->{type}         = 'article';
-    $result->{incdocs_id}   = delete $result->{id};
-
-    $request->orderid( $result->{incdocs_id} );
     $request->status('REQ');
     $request->store;
 
@@ -976,11 +972,9 @@ sub create_request {
         {
             outcome => 'INCDOCS_REQUEST_PLACED',
             request => $request,
-            message => $result->{lenderLibraryId}
+            message => $lenderLibraryId
         }
     );
-
-    $request->add_or_update_attributes($result);
 
     return {
         error   => 0,
@@ -1050,6 +1044,86 @@ sub _lender_supplying_agency {
     return unless $supplying_agency_id;
 
     return Koha::ILL::ISO18626::SupplyingAgencies->find($supplying_agency_id);
+}
+
+=head3 _lender_content_location
+
+    my $url = _lender_content_location( $lenderLibraryId, $request );
+
+Return the IncDocs access link of the article of C<$request> for the lending library, i.e. the
+contentLocation IncDocs returns when the article is looked up as that library.
+
+=cut
+
+sub _lender_content_location {
+    my ( $lenderLibraryId, $request ) = @_;
+
+    my $doi_attr  = $request->extended_attributes->find( { type => 'doi' } );
+    my $pmid_attr = $request->extended_attributes->find( { type => 'pubmedid' } );
+    return unless $doi_attr || $pmid_attr;
+
+    my $id_code  = $doi_attr ? 'doi' : 'pmid';
+    my $id_value = ( $doi_attr // $pmid_attr )->value =~ s/^\s+|\s+$//gr;
+    $id_value =~ s/.*?(?=10\.)// if $doi_attr;
+
+    my $result = _incdocs_api_availability( $lenderLibraryId, $id_code, $id_value );
+    return $result->{response}->{data}->{contentLocation};
+}
+
+=head3 _iso18626_request_body
+
+    my $body = $self->_iso18626_request_body( $request, $content_location );
+
+Return the content of the ISO 18626 request message for C<$request>, without its header.
+C<$content_location> is the lending library's IncDocs access link, sent in the note.
+
+=cut
+
+sub _iso18626_request_body {
+    my ( $self, $request, $content_location ) = @_;
+
+    my %attrs = map { $_->type => $_->value } $request->extended_attributes->as_list;
+    my $value = sub { my $v = $attrs{ $_[0] }; return defined $v && length $v ? $v : undef };
+
+    my $bibliographic_info = { informationSource => 'IncDocs' };
+    $bibliographic_info->{titleOfComponent}  = $value->('article_title')                      if $value->('article_title');
+    $bibliographic_info->{title}             = $value->('title')                              if $value->('title');
+    $bibliographic_info->{authorOfComponent} = $value->('article_author') // $value->('authors')
+        if $value->('article_author') // $value->('authors');
+    $bibliographic_info->{volume} = [ $value->('volume') ] if $value->('volume');
+    $bibliographic_info->{issue}  = $value->('issue')      if $value->('issue');
+
+    my $pages = $value->('pages')
+        // ( $value->('spage') ? join( '-', grep { defined } $value->('spage'), $value->('epage') ) : undef );
+    $bibliographic_info->{pagesRequested} = $pages if $pages;
+
+    if ( my $doi = $value->('doi') ) {
+        $doi =~ s/^\s+|\s+$//g;
+        $doi =~ s/.*?(?=10\.)//;
+        push @{ $bibliographic_info->{bibliographicItemId} },
+            { bibliographicItemIdentifierCode => 'DOI', bibliographicItemIdentifier => $doi };
+    }
+    for my $issn ( grep { defined } $value->('issn'), $value->('eissn') ) {
+        push @{ $bibliographic_info->{bibliographicItemId} },
+            { bibliographicItemIdentifierCode => 'ISSN', bibliographicItemIdentifier => $issn };
+    }
+    if ( my $pmid = $value->('pubmedid') ) {
+        push @{ $bibliographic_info->{bibliographicRecordId} },
+            { bibliographicRecordIdentifierCode => 'PMID', bibliographicRecordIdentifier => $pmid };
+    }
+
+    my $publication_info = { publicationType => 'Article' };
+    my $date             = $value->('year') // $value->('published_date') // $value->('date');
+    $publication_info->{publicationDate} = $date if $date;
+
+    my $service_info = { serviceType => 'Copy' };
+    $service_info->{note} = $content_location if $content_location;
+
+    return {
+        bibliographicInfo => $bibliographic_info,
+        publicationInfo   => $publication_info,
+        serviceInfo       => $service_info,
+    };
 }
 
 =head3 confirm
@@ -1183,7 +1257,10 @@ sub capabilities {
 
         provides_batch_requests => sub { return 1; },
 
-        create_api => sub { $self->create_api(@_) }
+        create_api => sub { $self->create_api(@_) },
+
+        # We send ISO18626 requests to Koha's supplying agencies
+        iso18626_requesting => sub { return 1; },
     };
 
     return $capabilities->{$name};
@@ -1324,6 +1401,7 @@ sub cancel {
     my ( $self, $params ) = @_;
 
     my $stage = $params->{other}->{stage};
+
     my $illLendingLibraryEmail = $params->{request}->illrequestattributes->find( { type => 'illLendingLibraryEmail' } );
 
     return {
