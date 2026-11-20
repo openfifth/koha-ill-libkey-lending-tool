@@ -11,12 +11,26 @@
                   <h2 class="text-danger">[% error %] </h2>
                 [% ELSE %]
                   <h2>Found [% libraries.size %] libraries</h2>
+                  [% IF saved %]
+                    <div class="alert alert-info">Supplying agencies saved.</div>
+                  [% END %]
+                  [% IF core_supports_requesting %]
+                  <p>Requests found at another library are sent over ISO18626 to the supplying agency set for that library. Supplying agencies are configured in <a href="/cgi-bin/koha/ill/iso18626_supplying_agencies">Interlibrary loans &rsaquo; Supplying agencies</a>.</p>
+                  <form method="post" action="/cgi-bin/koha/plugins/run.pl">
+                  [% INCLUDE 'csrf-token.inc' %]
+                  <input type="hidden" name="class" value="Koha::Plugin::Com::PTFSEurope::IncDocs" />
+                  <input type="hidden" name="method" value="tool" />
+                  <input type="hidden" name="op" value="cud-save_lender_agencies" />
+                  [% END %]
                   <table>
                       <thead>
                           <tr>
                               <th>IncDocs ID</th>
                               <th>IncDocs Name</th>
                               <th>Koha library record</th>
+                              [% IF core_supports_requesting %]
+                              <th>Supplying agency</th>
+                              [% END %]
                           </tr>
                       </thead>
                       <tbody>
@@ -36,10 +50,30 @@
                                   [% ELSE %]
                                     <td>N/A</td>
                                   [% END %]
+                                  [% IF core_supports_requesting %]
+                                    <td>
+                                      <select name="lender_agency_[% library.id | html %]">
+                                        <option value="">None</option>
+                                        [% FOREACH supplying_agency IN supplying_agencies %]
+                                          [% IF lender_agencies.${library.id} == supplying_agency.iso18626_supplying_agency_id %]
+                                            <option value="[% supplying_agency.iso18626_supplying_agency_id | html %]" selected="selected">[% supplying_agency.name || supplying_agency.agency_id | html %]</option>
+                                          [% ELSE %]
+                                            <option value="[% supplying_agency.iso18626_supplying_agency_id | html %]">[% supplying_agency.name || supplying_agency.agency_id | html %]</option>
+                                          [% END %]
+                                        [% END %]
+                                      </select>
+                                    </td>
+                                  [% END %]
                               </tr>
                           [% END %]
                       </tbody>
                   </table>
+                  [% IF core_supports_requesting %]
+                  <fieldset class="action">
+                    <input type="submit" class="btn btn-primary" value="Save supplying agencies" />
+                  </fieldset>
+                  </form>
+                  [% END %]
                 [% END %]
           </div>
         </div>

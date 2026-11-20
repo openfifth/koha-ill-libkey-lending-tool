@@ -1020,6 +1020,38 @@ sub found_locally_complete {
     $request->add_or_update_attributes( { lenderLibraryId => $requesterLibraryId } );
 }
 
+=head3 _core_supports_requesting
+
+    my $supported = _core_supports_requesting();
+
+Return whether this Koha version can send ISO 18626 requests (Koha::ILL::ISO18626::Requester, bug 41091).
+
+=cut
+
+sub _core_supports_requesting {
+    return eval { require Koha::ILL::ISO18626::Requester; require Koha::ILL::ISO18626::SupplyingAgencies; 1 } ? 1 : 0;
+}
+
+=head3 _lender_supplying_agency
+
+    my $supplying_agency = $self->_lender_supplying_agency($lenderLibraryId);
+
+Return the I<Koha::ILL::ISO18626::SupplyingAgency> set for the IncDocs library C<$lenderLibraryId>
+on the 'IncDocs libraries' page.
+
+=cut
+
+sub _lender_supplying_agency {
+    my ( $self, $lenderLibraryId ) = @_;
+
+    return unless _core_supports_requesting() && $lenderLibraryId;
+
+    my $supplying_agency_id = $self->{config}->{lender_agencies}->{$lenderLibraryId};
+    return unless $supplying_agency_id;
+
+    return Koha::ILL::ISO18626::SupplyingAgencies->find($supplying_agency_id);
+}
+
 =head3 confirm
 
 A wrapper around create_request allowing us to
@@ -1956,6 +1988,26 @@ sub list_incdocs_libraries {
         ( scalar @{ $b->{koha_libraries} } > 0 ) <=> ( scalar @{ $a->{koha_libraries} } > 0 )
             || lc( $a->{name} ) cmp lc( $b->{name} )
     } @$libraries;
+
+    if ( _core_supports_requesting() ) {
+        if ( ( $cgi->param('op') // '' ) eq 'cud-save_lender_agencies' ) {
+            my $lender_agencies = {};
+            for my $incdocs_library (@$libraries) {
+                my $supplying_agency_id = $cgi->param( 'lender_agency_' . $incdocs_library->{id} );
+                $lender_agencies->{ $incdocs_library->{id} } = $supplying_agency_id if $supplying_agency_id;
+            }
+            $self->{config}->{lender_agencies} = $lender_agencies;
+            $self->store_data( { incdocs_config => scalar encode_json( $self->{config} ) } );
+            $template->param( 'saved' => 1 );
+        }
+
+        $template->param(
+            'core_supports_requesting' => 1,
+            'supplying_agencies'       =>
+                [ Koha::ILL::ISO18626::SupplyingAgencies->search( {}, { order_by => 'name' } )->as_list ],
+            'lender_agencies'          => $self->{config}->{lender_agencies} // {},
+        );
+    }
 
     $template->param( 'libraries' => \@sorted_libraries );
     $self->output_html( $template->output(), undef, undef, $cookie );
