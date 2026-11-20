@@ -1452,6 +1452,10 @@ sub cancel {
 
     my $stage = $params->{other}->{stage};
 
+    my $supplying_agency =
+        _core_supports_requesting() ? Koha::ILL::ISO18626::Requester->supplying_agency( $params->{request} ) : undef;
+    return $self->_cancel_iso18626( $params, $supplying_agency ) if $supplying_agency;
+
     my $illLendingLibraryEmail = $params->{request}->illrequestattributes->find( { type => 'illLendingLibraryEmail' } );
 
     return {
@@ -1555,6 +1559,53 @@ sub cancel {
             value   => {},
         };
     }
+}
+
+=head3 _cancel_iso18626
+
+    my $response = $self->_cancel_iso18626( $params, $supplying_agency );
+
+Cancel a request that was sent to C<$supplying_agency> over ISO 18626: send it a Cancel
+requestingAgencyMessage, add the lending library to the declined list and set the request to
+'Cancellation requested', so it can be placed again with a different library.
+
+=cut
+
+sub _cancel_iso18626 {
+    my ( $self, $params, $supplying_agency ) = @_;
+
+    my $stage   = $params->{other}->{stage};
+    my $request = $params->{request};
+
+    my $response = {
+        method              => 'cancel',
+        stage               => 'confirm',
+        value               => $params,
+        iso18626            => 1,
+        supplyingAgencyName => $supplying_agency->name || $supplying_agency->agency_id,
+    };
+
+    return $response if !$stage || $stage eq 'init';
+
+    return { %$response, error => 1, status => 'unknown_stage', message => '' } unless $stage eq 'confirm';
+
+    my $result = Koha::ILL::ISO18626::Requester->send_requesting_agency_message(
+        { illrequest => $request, action => 'Cancel' } );
+    return { %$response, error => 1, message => "The cancellation could not be sent: $result->{error}" }
+        unless $result->{success};
+
+    my $lender_id = $request->extended_attributes->find( { type => 'lenderLibraryId' } );
+    _add_to_declined_list( $request, $lender_id->value ) if $lender_id;
+
+    $request->status('CANCREQ');
+    _reset_incdocs_info($request);
+
+    return {
+        method => 'cancel',
+        stage  => 'commit',
+        next   => 'illview',
+        value  => $params,
+    };
 }
 
 =head3 _fail
@@ -2552,6 +2603,7 @@ sub _reset_incdocs_info {
     $request->illrequestattributes->search( { type => 'created' } )->delete;
     $request->illrequestattributes->search( { type => 'articleId' } )->delete;
     $request->illrequestattributes->search( { type => 'date' } )->delete;
+    $request->illrequestattributes->search( { type => 'iso18626_supplying_agency_request_id' } )->delete;
 }
 
 1;
