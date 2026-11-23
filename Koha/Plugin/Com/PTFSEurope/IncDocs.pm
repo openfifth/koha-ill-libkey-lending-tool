@@ -41,6 +41,8 @@ use Koha::Patrons;
 
 our $VERSION = "2.7.3";
 
+use constant ISO18626_IN_PROGRESS => qw( WillSupply ExpectToSupply RetryPossible );
+
 our $metadata = {
     name            => 'IncDocs',
     author          => 'Open Fifth',
@@ -1131,8 +1133,9 @@ sub _iso18626_request_body {
     $self->_handle_supplying_agency_message( { request => $request, message => $message } );
 
 Update C<$request> from a supplyingAgencyMessage Koha received from the supplying agency it was
-sent to. CopyCompleted completes the request, with the document URL as its access URL. Unfilled
-declines it, so it can be requested again from another library.
+sent to. WillSupply, ExpectToSupply and RetryPossible set the matching ISO 18626 status. CopyCompleted
+completes the request, with the document URL as its access URL. Unfilled declines it, so it can be
+requested again from another library.
 
 =cut
 
@@ -1146,10 +1149,12 @@ sub _handle_supplying_agency_message {
         $request->orderid($supplying_agency_request_id)->store;
     }
 
-    return 1 unless $request->status eq 'REQ';
+    return 1 unless grep { $request->status eq $_ } ( 'REQ', ISO18626_IN_PROGRESS );
 
     my $status = $message->{statusInfo}->{status} // '';
-    if ( $status eq 'CopyCompleted' ) {
+    if ( grep { $status eq $_ } ISO18626_IN_PROGRESS ) {
+        $request->status($status) unless $request->status eq $status;
+    } elsif ( $status eq 'CopyCompleted' ) {
         $request->accessurl( $message->{deliveryInfo}->{URL} ) if $message->{deliveryInfo}->{URL};
         $request->status('COMP');
         $request->completed( dt_from_string() );
@@ -1371,7 +1376,7 @@ sub status_graph {
             ui_method_icon => 'fa-search',
         },
         COMP => {
-            prev_actions   => [ 'ERROR', 'UNAVAILABLE', 'REQ' ],
+            prev_actions   => [ 'ERROR', 'UNAVAILABLE', 'REQ', ISO18626_IN_PROGRESS ],
             id             => 'COMP',
             name           => 'Order Complete',
             ui_method_name => 'Mark completed',
@@ -1401,7 +1406,7 @@ sub status_graph {
             ui_method_icon => 'fa-check',
         },
         CANCREQ => {
-            prev_actions   => ['REQ'],
+            prev_actions   => [ 'REQ', ISO18626_IN_PROGRESS ],
             id             => 'CANCREQ',
             name           => 'Cancellation requested',
             ui_method_name => 'Cancel request',
