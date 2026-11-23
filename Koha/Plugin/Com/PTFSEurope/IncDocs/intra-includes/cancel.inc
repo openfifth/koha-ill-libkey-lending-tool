@@ -4,11 +4,7 @@
 
 [% IF whole.stage == "confirm" %]
     <h2>Cancel manual request</h2>
-    [% IF whole.iso18626 %]
-        <p>A cancellation will be sent to the supplying agency (<strong>[% whole.supplyingAgencyName | html %]</strong>) notifying that we no longer expect this request to be fulfilled.</p>
-    [% ELSE %]
-        <p>An email will be sent to the lending library (<strong>[% whole.illLendingLibraryEmail %]</strong>) notifying that we no longer expect this request to be fulfilled.</p>
-    [% END %]
+    <p>A cancellation will be sent to the supplying agency (<strong>[% whole.supplyingAgencyName | html %]</strong>) notifying that we no longer expect this request to be fulfilled.</p>
     <p>Proceeding with this action will set this request to 'Cancellation requested' and allow it to be placed again with a different library.</p>
     <p>
         [% base_url = "/cgi-bin/koha/ill/ill-requests.pl" %]

@@ -22,7 +22,7 @@ use warnings;
 
 use LWP::UserAgent;
 use HTTP::Request;
-use JSON qw( decode_json encode_json );
+use JSON qw( decode_json );
 use CGI;
 use URI;
 
@@ -94,43 +94,6 @@ sub Backend_Availability {
     my $request = HTTP::Request->new(
         'GET',
         $self->{baseurl} . "/ill_backend_availability_incdocs?metadata=" . $params->{metadata} . ($params->{forceIll} ? "&forceIll=" . $params->{forceIll} : "") . ($params->{incdocs_id} ? "&incdocs_id=" . $params->{incdocs_id} : "")
-    );
-
-    return decode_json( $self->{ua}->request($request)->decoded_content );
-}
-
-
-=head3 Create_Fulfillment_Request
-
-Make a call to /create_fulfillment_request
-
-=cut
-
-sub Create_Fulfillment_Request {
-    my ( $self, $params ) = @_;
-
-    my $request = HTTP::Request->new(
-        'POST',
-        $self->{baseurl} . "/create_fulfillment_request"
-    );
-
-    $request->content(encode_json($params));
-
-    return decode_json( $self->{ua}->request($request)->decoded_content );
-}
-
-=head3 Create_Fulfillment_Request
-
-Make a call to /create_fulfillment_request
-
-=cut
-
-sub Fulfillment_Request_Status {
-    my ( $self, $params ) = @_;
-
-    my $request = HTTP::Request->new(
-        'GET',
-        $self->{baseurl} . "/fulfillment_request_status?fulfillment_request_id=" . $params
     );
 
     return decode_json( $self->{ua}->request($request)->decoded_content );

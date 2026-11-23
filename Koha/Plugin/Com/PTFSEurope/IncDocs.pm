@@ -34,12 +34,13 @@ use C4::Letters;
 use Koha::Plugin::Com::PTFSEurope::IncDocs::Lib::API;
 use Koha::AdditionalFields;
 use Koha::ILL::Request;
+use Koha::ILL::Request::Attributes;
 use Koha::ILL::Requests;
 use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
-our $VERSION = "2.7.3";
+our $VERSION = "3.0.0";
 
 use constant ISO18626_IN_PROGRESS => qw( WillSupply ExpectToSupply RetryPossible );
 
@@ -101,6 +102,7 @@ sub configure {
                 $p->{$key} = $hashed->{$key};
             }
         }
+        $p->{lender_agencies} = $config->{lender_agencies} if $config->{lender_agencies};
 
         $self->store_data( { incdocs_config => scalar encode_json($p) } );
         $template->param(
@@ -136,7 +138,35 @@ sub upgrade {
     my $dt = dt_from_string();
     $self->store_data( { last_upgraded => $dt->ymd('-') . ' ' . $dt->hms(':') } );
 
+    my @thirdiron_requests = $self->_thirdiron_requests->get_column('illrequest_id');
+    warn sprintf(
+        "IncDocs 3.0.0 no longer checks requests placed with ThirdIron. Follow these up with the lending library: %s\n",
+        join( ', ', @thirdiron_requests )
+    ) if @thirdiron_requests;
+
     return 1;
+}
+
+=head3 _thirdiron_requests
+
+    my $requests = $self->_thirdiron_requests;
+
+Return the IncDocs requests placed with ThirdIron before version 3.0.0 that are still 'Requested',
+i.e. those not sent over ISO 18626.
+
+=cut
+
+sub _thirdiron_requests {
+    return Koha::ILL::Requests->search(
+        {
+            backend       => 'IncDocs',
+            status        => 'REQ',
+            illrequest_id => {
+                -not_in => Koha::ILL::Request::Attributes->search( { type => 'iso18626_supplying_agency_id' } )
+                    ->_resultset->get_column('illrequest_id')->as_query
+            },
+        }
+    );
 }
 
 sub uninstall() {
@@ -1366,15 +1396,6 @@ sub status_graph {
             next_actions   => [ 'REQ', 'COMP', 'EDITITEM', 'MIG', 'KILL' ],
             ui_method_icon => 0,
         },
-        STAT => {
-            prev_actions   => ['REQ'],
-            id             => 'STAT',
-            name           => 'IncDocs Status',
-            ui_method_name => 'Check IncDocs status',
-            method         => 'status',
-            next_actions   => [],
-            ui_method_icon => 'fa-search',
-        },
         COMP => {
             prev_actions   => [ 'ERROR', 'UNAVAILABLE', 'REQ', ISO18626_IN_PROGRESS ],
             id             => 'COMP',
@@ -1393,7 +1414,7 @@ sub status_graph {
             name           => 'Requested',
             ui_method_name => 'Request from IncDocs',
             method         => 'confirm',
-            next_actions   => [ 'STAT', 'COMP', 'CANCREQ' ],
+            next_actions   => [ 'COMP', 'CANCREQ' ],
             ui_method_icon => 'fa-check',
         },
         UNAVAILABLE => {
@@ -1448,20 +1469,19 @@ sub status_graph {
 
   my $response = $backend->cancel({ params => $params });
 
-Will send an email to the lending library letting them know we no longer expect this request.
+Cancel a request that was sent to a supplying agency over ISO 18626: send it a Cancel
+requestingAgencyMessage, add the lending library to the declined list and set the request to
+'Cancellation requested', so it can be placed again with a different library.
 
 =cut
 
 sub cancel {
     my ( $self, $params ) = @_;
 
-    my $stage = $params->{other}->{stage};
-
+    my $stage            = $params->{other}->{stage};
+    my $request          = $params->{request};
     my $supplying_agency =
-        _core_supports_requesting() ? Koha::ILL::ISO18626::Requester->supplying_agency( $params->{request} ) : undef;
-    return $self->_cancel_iso18626( $params, $supplying_agency ) if $supplying_agency;
-
-    my $illLendingLibraryEmail = $params->{request}->illrequestattributes->find( { type => 'illLendingLibraryEmail' } );
+        _core_supports_requesting() ? Koha::ILL::ISO18626::Requester->supplying_agency($request) : undef;
 
     return {
         error   => 1,
@@ -1470,123 +1490,12 @@ sub cancel {
         method  => 'cancel',
         stage   => $params->{stage},
         value   => {},
-    } unless $illLendingLibraryEmail;
-
-
-    if ( !$stage || $stage eq 'init' ) {
-        return {
-            illLendingLibraryEmail => $illLendingLibraryEmail->value,
-            method                 => 'cancel',
-            stage                  => 'confirm',
-            value                  => $params,
-        };
-    } elsif ( $stage eq 'confirm' ) {
-        my $request = $params->{request};
-
-        my $incdocs     = Koha::Plugin::Com::PTFSEurope::IncDocs->new;
-        my $config      = eval { decode_json( $incdocs->retrieve_data("incdocs_config") // {} ) };
-        my $letter_code = $config->{cancel_email_template};
-
-        unless ($letter_code) {
-            return {
-                error                  => 1,
-                message                => "Cancel email template configuration not found.",
-                method                 => 'cancel',
-                stage                  => 'confirm',
-                value                  => $params,
-                illLendingLibraryEmail => $illLendingLibraryEmail->value,
-            };
-        }
-
-        my $library = Koha::Libraries->find( $request->branchcode );
-        my $patron  = $request->borrowernumber ? Koha::Patrons->find( $request->borrowernumber ) : undef;
-
-        my $letter;
-        eval {
-            $letter = $request->get_notice(
-                {
-                    notice_code => $letter_code,
-                    transport   => 'email'
-                }
-            );
-        };
-
-
-        unless ($letter) {
-            return {
-                error   => 1,
-                message => "Notice template '$letter_code' not found",
-                method  => 'cancel',
-                stage   => 'confirm',
-                value   => $params,
-                illLendingLibraryEmail => $illLendingLibraryEmail->value,
-            };
-        }
-
-        C4::Letters::EnqueueLetter(
-            {
-                letter                 => $letter,
-                from_address           => $library->from_email_address,
-                to_address             => $illLendingLibraryEmail->value,
-                message_transport_type => 'email',
-                $patron ? ( borrowernumber => $patron->borrowernumber ) : (),
-            }
-        );
-
-        Koha::ILL::Request::Logger->new->log_patron_notice(
-            {
-                request     => $request,
-                notice_code => $letter_code
-            }
-        );
-
-        my $lender_id = $request->extended_attributes->find( { type => 'lenderLibraryId' } );
-        _add_to_declined_list( $request, $lender_id->value ) if $lender_id;
-
-        $request->status('CANCREQ');
-        _reset_incdocs_info($request);
-
-        return {
-            method => 'cancel',
-            stage  => 'commit',
-            next   => 'illview',
-            value  => $params,
-        };
-    } else {
-
-        # Invalid stage, return error.
-        return {
-            error   => 1,
-            status  => 'unknown_stage',
-            message => '',
-            method  => 'cancel',
-            stage   => $params->{stage},
-            value   => {},
-        };
-    }
-}
-
-=head3 _cancel_iso18626
-
-    my $response = $self->_cancel_iso18626( $params, $supplying_agency );
-
-Cancel a request that was sent to C<$supplying_agency> over ISO 18626: send it a Cancel
-requestingAgencyMessage, add the lending library to the declined list and set the request to
-'Cancellation requested', so it can be placed again with a different library.
-
-=cut
-
-sub _cancel_iso18626 {
-    my ( $self, $params, $supplying_agency ) = @_;
-
-    my $stage   = $params->{other}->{stage};
-    my $request = $params->{request};
+    } unless $supplying_agency;
 
     my $response = {
         method              => 'cancel',
         stage               => 'confirm',
         value               => $params,
-        iso18626            => 1,
         supplyingAgencyName => $supplying_agency->name || $supplying_agency->agency_id,
     };
 
@@ -1942,12 +1851,6 @@ sub fieldmap {
             type      => "string",
             exclude   => 1,
             label     => "Lender library ID",
-            position  => 99
-        },
-        illLendingLibraryEmail => {
-            type      => "string",
-            exclude   => 1,
-            label     => "Lender library email address",
             position  => 99
         },
         contentLocation => {
@@ -2330,115 +2233,6 @@ sub availability {
     return $response;
 }
 
-=head3 status
-
-    my $response = $IncDocs->status( $record, $status, $params );
-
-Return an ILL standard response for the status method call.
-
-=cut
-
-sub status {
-    my ( $self, $params ) = @_;
-
-    my $stage = $params->{other}->{stage};
-
-    if ( !$stage || $stage eq 'init' ) {
-
-        my $request = Koha::ILL::Requests->find( $params->{other}->{illrequest_id} );
-
-        if ( !$request->orderid ) {
-            return {
-                status  => "",
-                message => "This request does not have an IncDocs request ID",    #this is not showing. why?
-                error   => 0,
-                value   => {},
-                method  => "status",
-                next    => "illview",
-                stage   => "show_status",
-            };
-        }
-
-        my $incdocs =
-            Koha::Plugin::Com::PTFSEurope::IncDocs->new->new_ill_backend(
-            { logger => Koha::ILL::Request::Logger->new } );
-        my $result = $incdocs->{_api}->Fulfillment_Request_Status( $request->orderid );
-
-        if ( $result->{error} ) {
-            my $error_string = join ', ',
-                map { "IncDocs returned error: $_->{title} (status: $_->{status})" } @{ $result->{error} };
-            $request->append_to_note($error_string);
-            $request->status('ERROR')->store;
-            return {
-                error   => 0,
-                status  => '',
-                message => '',
-                method  => 'confirm',
-                stage   => 'commit',
-                next    => 'illview',
-                value   => {}
-            };
-        }
-
-        my $lenderLibraryName =
-              $request->extended_attributes->find( { type => 'lenderLibraryName' } )
-            ? $request->extended_attributes->find( { type => 'lenderLibraryName' } )->value
-            : undef;
-        $result->{lenderLibraryName} = $lenderLibraryName;
-        $result->{illrequest_id}  = $request->illrequest_id;
-        $result->{request_status} = $request->status;
-
-        my $status = {
-            status  => 200,
-            message => '',
-            error   => '',
-            value   => $result,
-        };
-        $status->{method} = "status";
-        $status->{stage}  = "show_status";
-
-        if ( $result->{status} eq 'complete' ) {
-            $request->status('COMP');
-            $request->completed( dt_from_string() );
-            $self->_set_auto_status_alias($request);
-            $request->store();
-        } elsif ( $result->{status} eq 'declined' ) {
-            $request->status('REQREV');
-            my $note = "IncDocs library ID $result->{lenderLibraryId}";
-            if (defined $result->{lenderLibraryName}) {
-                $note .= " ($result->{lenderLibraryName})";
-            }
-            $note .= " decline reason: $result->{declinedReason}";
-            $request->append_to_note($note);
-
-            _add_to_declined_list( $params->{request}, $result->{lenderLibraryId} );
-        }
-
-        # Log the outcome
-        $self->log_request_outcome(
-            {
-                outcome => 'INCDOCS_STATUS_CHECK',
-                request => $request,
-                message => $result->{status}
-            }
-        );
-
-        return $status;
-    } else {
-
-        # Assume stage is commit, we just return.
-        return {
-            status  => "",
-            message => "",
-            error   => 0,
-            value   => {},
-            method  => "status",
-            next    => "illview",
-            stage   => "commit",
-        };
-    }
-}
-
 sub _set_auto_status_alias {
     my ( $self, $request ) = @_;
 
@@ -2492,7 +2286,7 @@ Return an ILL standard response for the confirm method call, in the case of
 an unmediated workflow.
 
 In the context of IncDocs this involves skipping the availability lookup
-and placing the fulfilment request directly.
+and placing the request directly.
 
 =cut
 
@@ -2599,7 +2393,6 @@ sub _reset_incdocs_info {
 
     $request->illrequestattributes->search( { type => 'lenderLibraryId' } )->delete;
     $request->illrequestattributes->search( { type => 'lenderLibraryName' } )->delete;
-    $request->illrequestattributes->search( { type => 'illLendingLibraryEmail' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterEmail' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterLibraryId' } )->delete;
     $request->illrequestattributes->search( { type => 'requesterLibraryName' } )->delete;

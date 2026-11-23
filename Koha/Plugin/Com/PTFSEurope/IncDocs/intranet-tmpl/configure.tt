@@ -29,11 +29,6 @@
                                         <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The library group to be used for accessing the IncDocs API"><i class="fa-solid fa-circle-question"></i></a>
                                     </li>
                                     <li>
-                                        <label for="IncDocs_payload_customreference_input">Custom reference: </label>
-                                        <input id="IncDocs_payload_customreference_input" class="required_input" placeholder="PTFS-Europe TEST - DO NOT FULFILL" type="text" name="payload_customreference" value="[% config.payload_customreference | html %]" size="35">
-                                        <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The hardcoded customReference to be sent when placing the request. Otherwise, Koha's ILL request ID is sent as reference"><i class="fa-solid fa-circle-question"></i></a>
-                                    </li>
-                                    <li>
                                         <label for="IncDocs_payload_requesteremail_input">Fallback requester email: </label>
                                         <input id="IncDocs_payload_requesteremail_input" class="required_input" placeholder="developers@ptfs-europe.com" type="text" name="payload_requesteremail" value="[% config.payload_requesteremail | html %]" size="35">
                                         <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The requesterEmail to be sent if the patron's email is not available when placing the request."><i class="fa-solid fa-circle-question"></i></a>
@@ -57,11 +52,6 @@
                                         <label for="incdocs_requesting_library_email_template_input">Template notice to use when article is found locally: </label>
                                         <input id="incdocs_requesting_library_email_template_input" class="required_input" placeholder="Enter template notice code" type="text" name="requesting_library_email_template" value="[% config.requesting_library_email_template | html %]" size="35">
                                         <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The template notice code e.g. 'ILL_INCDOCS_LOCALLY'"><i class="fa-solid fa-circle-question"></i></a>
-                                    </li>
-                                    <li>
-                                        <label for="incdocs_cancel_email_template_input">Template notice to use when cancelling request: </label>
-                                        <input id="incdocs_cancel_email_template_input" class="required_input" placeholder="Enter template notice code" type="text" name="cancel_email_template" value="[% config.cancel_email_template | html %]" size="35">
-                                        <a href="#" class="library_limitation" data-bs-toggle="tooltip" title="The template notice code e.g. 'ILL_INCDOCS_CANCEL'"><i class="fa-solid fa-circle-question"></i></a>
                                     </li>
                                     <li>
                                         <label for="incdocs_complete_without_sending_button_input">Show option to complete without sending article: </label>

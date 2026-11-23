@@ -11,8 +11,8 @@ This plugin is designed to only work with AutoILLBackendPriority.
 ### ILLModuleUnmediated
 
 This backend utilizes the ILLModuleUnmediated system preference.
-If enabled, requests are placed with IncDocs as soon as they're created and are set to "Requested" status.
-Otherwise, requests are created with the "New" status and manual confirmation to place the request with IncDocs is required.
+If enabled, requests are placed as soon as they're created and are set to "Requested" status.
+Otherwise, requests are created with the "New" status and manual confirmation to place the request is required.
 This is only true for Staff created requests. Requests created from the OPAC always require mediation.
 
 ### IllLog
@@ -22,16 +22,35 @@ If enabled, IncDocs transactions are stored in the ILL request log for review.
 
 ## Requirements
 
-Only compatible with Koha 25.05+
+From version 3.0.0, this plugin requires Koha 26.11 with [bug 41091](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=41091).
+Requests found at another library are sent over ISO18626 to the supplying agency set for that library on the 'IncDocs libraries' page.
 
-This plugin requires [bug 38663](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=38663)
+## Upgrading to 3.0.0
+
+Version 3.0.0 no longer places requests with ThirdIron or checks their status, so the IncDocs status cron and the cancellation email are gone. Requests already placed with ThirdIron must be finished before upgrading.
+
+1) Set up a supplying agency for each lending library in 'Interlibrary loans > Supplying agencies'
+2) Stop placing requests found at another library
+3) Wait until this report returns no rows (IncDocs requests placed with ThirdIron that are still 'Requested'):
+
+```sql
+SELECT illrequest_id
+FROM illrequests
+WHERE backend = 'IncDocs'
+AND status = 'REQ'
+AND illrequest_id NOT IN (
+    SELECT illrequest_id FROM illrequestattributes WHERE type = 'iso18626_supplying_agency_id'
+)
+```
+
+4) Upgrade Koha and the plugin, then set the supplying agency for each lending library on the 'IncDocs libraries' page
+5) Remove the `process_incdocs_updates.pl` cron job
+
+If any of these requests are left, the upgrade logs their IDs so they can be followed up with the lending library.
 
 ## Libkey Lending Tool Documentation
 
 * [https://thirdiron.atlassian.net/wiki/spaces/BrowZineAPIDocs/pages/3550019585/LibKey+Lending+Tool+API+Documentation](https://thirdiron.atlassian.net/wiki/spaces/BrowZineAPIDocs/pages/3550019585/LibKey+Lending+Tool+API+Documentation).
-
-## IncDocs status update cron example (update every 30 minutes)
-See [crontab.example](Koha/Plugin/Com/PTFSEurope/IncDocs/cron/crontab.example) for a working example in k-t-d (needs adjusting for a live environment)
 
 ## Email template notice example for 'found locally' articles.
 This is used to send an email to the patron with the link to the article.
