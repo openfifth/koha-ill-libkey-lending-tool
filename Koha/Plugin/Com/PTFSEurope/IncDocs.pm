@@ -40,7 +40,7 @@ use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
-our $VERSION = "3.1.0";
+our $VERSION = "3.2.0";
 
 use constant ISO18626_IN_PROGRESS => qw( WillSupply ExpectToSupply RetryPossible );
 
