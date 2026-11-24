@@ -108,6 +108,18 @@
                                     </li>
                                 </ol>
                             </div>
+                            <legend>Unmediated options</legend>
+                            <div class="row">
+                                <ol>
+                                    <li>
+                                        <label for="incdocs_max_auto_rerequests_input">Maximum automatic re-requests: </label>
+                                        <input id="incdocs_max_auto_rerequests_input" type="number" min="0" name="max_auto_rerequests" value="[% config.max_auto_rerequests || 0 | html %]" size="5">
+                                        <a href="#" data-bs-toggle="tooltip" title="Requires ILLModuleUnmediated. When a library declines a request, it is requested automatically from another IncDocs library, up to this many times. 0 turns automatic re-requests off">
+                                            <i class="fa-solid fa-circle-question"></i>
+                                        </a>
+                                    </li>
+                                </ol>
+                            </div>
                             <legend>Batches options</legend>
                             <div class="row">
                                 <ol>

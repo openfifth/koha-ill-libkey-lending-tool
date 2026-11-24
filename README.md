@@ -15,6 +15,16 @@ If enabled, requests are placed as soon as they're created and are set to "Reque
 Otherwise, requests are created with the "New" status and manual confirmation to place the request is required.
 This is only true for Staff created requests. Requests created from the OPAC always require mediation.
 
+### Automatic re-requests
+
+When ILLModuleUnmediated is enabled and a supplying agency declines a request (Unfilled), the request is
+requested automatically from another IncDocs library, up to the 'Maximum automatic re-requests' setting
+(0, the default, turns this off). Libraries the request was cancelled with count towards the limit.
+If no other library has the article, the request goes to 'Unavailable' so staff can switch provider.
+
+Re-requests run as background jobs, so the Koha background job worker must be running, and the
+staffClientBaseURL system preference must be set.
+
 ### IllLog
 
 This backend utilizes the IllLog system preference.

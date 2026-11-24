@@ -52,6 +52,7 @@ our $metadata = {
     minimum_version => '26.11.00.000',
     maximum_version => undef,
     version         => $VERSION,
+    namespace       => 'incdocs',
     description     =>
         'This backend provides the ability to create Interlibrary Loan requests using the LibKey Lending Tool API service.'
 };
@@ -111,6 +112,21 @@ sub configure {
         );
     }
     $self->output_html( $template->output() );
+}
+
+=head3 background_tasks
+
+Background jobs this plugin provides
+
+=cut
+
+sub background_tasks {
+    return {
+        rerequest => {
+            class => 'Koha::Plugin::Com::PTFSEurope::IncDocs::BackgroundJob::ReRequest',
+            name  => 'IncDocs automatic re-request',
+        },
+    };
 }
 
 sub api_routes {
@@ -1179,7 +1195,8 @@ Update C<$request> from a supplyingAgencyMessage Koha received from the supplyin
 sent to. WillSupply, ExpectToSupply and RetryPossible set the matching ISO 18626 status. CopyCompleted
 keeps the document URL as the access URL and sets 'Copy completed', so staff can retrieve the
 document and send it to the patron (on Koha versions that cannot retrieve documents, it completes
-the request). Unfilled declines it, so it can be requested again from another library.
+the request). Unfilled declines it, so it can be requested again from another library, which happens
+automatically when ILLModuleUnmediated is enabled (see L</_queue_rerequest>).
 
 =cut
 
@@ -1219,9 +1236,39 @@ sub _handle_supplying_agency_message {
         $request->append_to_note($note);
 
         _add_to_declined_list( $request, $lender_id->value ) if $lender_id;
+        $self->_queue_rerequest($request);
     }
 
     return 1;
+}
+
+=head3 _queue_rerequest
+
+    $self->_queue_rerequest($request);
+
+When ILLModuleUnmediated is enabled, queue a background job to request C<$request> again from
+another IncDocs library, unless the number of declined libraries is above the 'Maximum automatic
+re-requests' setting.
+
+=cut
+
+sub _queue_rerequest {
+    my ( $self, $request ) = @_;
+
+    my $max = $self->{config}->{max_auto_rerequests} // '';
+    return unless C4::Context->preference('ILLModuleUnmediated') && $max =~ /^\d+$/ && $max > 0;
+
+    my $declined = $request->extended_attributes->find( { type => 'declined_lenderLibraryId_list' } );
+    my $attempt  = $declined ? scalar( split( /\|/, $declined->value ) ) : 0;
+
+    if ( $attempt > $max ) {
+        $request->append_to_note("Automatic re-requests stopped: the limit of $max was reached");
+        return;
+    }
+
+    require Koha::Plugin::Com::PTFSEurope::IncDocs::BackgroundJob::ReRequest;
+    Koha::Plugin::Com::PTFSEurope::IncDocs::BackgroundJob::ReRequest->new->enqueue(
+        { illrequest_id => $request->illrequest_id, attempt => $attempt, max => $max } );
 }
 
 =head3 confirm
@@ -2447,8 +2494,9 @@ sub unmediated_confirm {
         return unless $data->{contentLocation} && !$data->{illLibraryId};
     }
 
-    if (   $availability->{backend_availability}->{error}
-        && $availability->{backend_availability}->{error} eq 'Provided doi or pubmedid is not available in IncDocs' )
+    my $availability_error = $availability->{backend_availability}->{error} // '';
+    if (   $availability_error eq 'Provided doi or pubmedid is not available in IncDocs'
+        || $availability_error eq 'Not found at any different library' )
     {
         my $request = Koha::ILL::Requests->find( $availability->{illrequest_id} );
         $request->status('UNAVAILABLE')->store if ( $request->status ne 'UNAVAILABLE' );
