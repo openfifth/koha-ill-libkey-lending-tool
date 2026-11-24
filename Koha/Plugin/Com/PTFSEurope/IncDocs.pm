@@ -40,7 +40,7 @@ use Koha::ILL::Request::Workflow;
 use Koha::Libraries;
 use Koha::Patrons;
 
-our $VERSION = "3.0.0";
+our $VERSION = "3.1.0";
 
 use constant ISO18626_IN_PROGRESS => qw( WillSupply ExpectToSupply RetryPossible );
 
@@ -48,7 +48,7 @@ our $metadata = {
     name            => 'IncDocs',
     author          => 'Open Fifth',
     date_authored   => '2024-11-18',
-    date_updated    => "2026-11-16",
+    date_updated    => "2026-11-24",
     minimum_version => '26.11.00.000',
     maximum_version => undef,
     version         => $VERSION,
