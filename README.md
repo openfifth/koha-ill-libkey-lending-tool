@@ -25,6 +25,16 @@ If enabled, IncDocs transactions are stored in the ILL request log for review.
 From version 3.0.0, this plugin requires Koha 26.11 with [bug 41091](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=41091).
 Requests found at another library are sent over ISO18626 to the supplying agency set for that library on the 'IncDocs libraries' page.
 
+## Receiving documents
+
+When the supplying agency sends the article, the request goes to 'Copy completed'. Then:
+
+1) 'Retrieve document' downloads the article into the request's documents, tells the supplying agency it was received, and sets the request to 'Document received'
+2) 'Send to patron' sends the patron the 'ILL document ready for download' (ILL_DOCUMENT_READY) notice and completes the request
+
+The patron needs an email address and the 'Interlibrary loan ready' messaging preference for the notice.
+On Koha versions without `Koha::ILL::ISO18626::Requester->retrieve_document`, 'Copy completed' completes the request instead, with the article link as its access URL.
+
 ## Upgrading to 3.0.0
 
 Version 3.0.0 no longer places requests with ThirdIron or checks their status, so the IncDocs status cron and the cancellation email are gone. Requests already placed with ThirdIron must be finished before upgrading.

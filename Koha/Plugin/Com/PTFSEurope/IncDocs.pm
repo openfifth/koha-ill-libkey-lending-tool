@@ -1058,6 +1058,19 @@ sub _core_supports_requesting {
     return eval { require Koha::ILL::ISO18626::Requester; require Koha::ILL::ISO18626::SupplyingAgencies; 1 } ? 1 : 0;
 }
 
+=head3 _core_supports_documents
+
+    my $supported = _core_supports_documents();
+
+Return whether this Koha version can retrieve the documents supplying agencies send
+(Koha::ILL::ISO18626::Requester->retrieve_document).
+
+=cut
+
+sub _core_supports_documents {
+    return _core_supports_requesting() && Koha::ILL::ISO18626::Requester->can('retrieve_document') ? 1 : 0;
+}
+
 =head3 _lender_supplying_agency
 
     my $supplying_agency = $self->_lender_supplying_agency($lenderLibraryId);
@@ -1164,8 +1177,9 @@ sub _iso18626_request_body {
 
 Update C<$request> from a supplyingAgencyMessage Koha received from the supplying agency it was
 sent to. WillSupply, ExpectToSupply and RetryPossible set the matching ISO 18626 status. CopyCompleted
-completes the request, with the document URL as its access URL. Unfilled declines it, so it can be
-requested again from another library.
+keeps the document URL as the access URL and sets 'Copy completed', so staff can retrieve the
+document and send it to the patron (on Koha versions that cannot retrieve documents, it completes
+the request). Unfilled declines it, so it can be requested again from another library.
 
 =cut
 
@@ -1186,9 +1200,11 @@ sub _handle_supplying_agency_message {
         $request->status($status) unless $request->status eq $status;
     } elsif ( $status eq 'CopyCompleted' ) {
         $request->accessurl( $message->{deliveryInfo}->{URL} ) if $message->{deliveryInfo}->{URL};
-        $request->status('COMP');
-        $request->completed( dt_from_string() );
-        $self->_set_auto_status_alias($request);
+        if ( _core_supports_documents() ) {
+            $request->status('CopyCompleted');
+        } else {
+            $self->_complete($request);
+        }
         $request->store;
     } elsif ( $status eq 'Unfilled' ) {
         my $lender_id   = $request->extended_attributes->find( { type => 'lenderLibraryId' } );
@@ -1453,6 +1469,24 @@ sub status_graph {
             next_actions   => [ 'REQ', 'GENREQ', 'KILL', 'MIG' ],
             ui_method_icon => 'fa-search',
         },
+        DocumentReceived => {
+            prev_actions   => ['CopyCompleted'],
+            id             => 'DocumentReceived',
+            name           => 'Document received',
+            ui_method_name => 'Retrieve document',
+            method         => 'retrieve_document',
+            next_actions   => ['DocumentSent'],
+            ui_method_icon => 'fa-file-arrow-down',
+        },
+        DocumentSent => {
+            prev_actions   => ['DocumentReceived'],
+            id             => 'DocumentSent',
+            name           => 'Sent to user',
+            ui_method_name => 'Send to patron',
+            method         => 'send_to_patron',
+            next_actions   => [],
+            ui_method_icon => 'fa-envelope',
+        },
         UNAUTH => {
             prev_actions   => [],
             id             => 'UNAUTH',
@@ -1520,6 +1554,114 @@ sub cancel {
         next   => 'illview',
         value  => $params,
     };
+}
+
+=head3 retrieve_document
+
+    my $response = $backend->retrieve_document( { request => $request } );
+
+Download the document the supplying agency sent, attach it to the request, tell the supplying
+agency it was received and set the request to 'Document received'.
+
+=cut
+
+sub retrieve_document {
+    my ( $self, $params ) = @_;
+
+    my $request = $params->{request};
+    my $error   = {
+        error  => 1,
+        status => 'document_retrieval_failed',
+        method => 'retrieve_document',
+        stage  => 'init',
+        next   => 'illview',
+        value  => $params,
+    };
+
+    return { %$error, message => 'This Koha version cannot retrieve ILL documents.' }
+        unless _core_supports_documents();
+
+    my $result =
+        Koha::ILL::ISO18626::Requester->retrieve_document( { illrequest => $request, url => $request->accessurl } );
+    return { %$error, message => "The document could not be retrieved: $result->{error}" }
+        unless $result->{success};
+
+    $request->append_to_note("The supplying agency was not told the document was received: $result->{warning}")
+        if $result->{warning};
+    $request->status('DocumentReceived')->store;
+
+    return {
+        error   => 0,
+        status  => '',
+        message => '',
+        method  => 'retrieve_document',
+        stage   => 'commit',
+        next    => 'illview',
+    };
+}
+
+=head3 send_to_patron
+
+    my $response = $backend->send_to_patron( { request => $request } );
+
+Send the patron the ILL_DOCUMENT_READY notice, linking to the documents attached to the request,
+and complete the request.
+
+=cut
+
+sub send_to_patron {
+    my ( $self, $params ) = @_;
+
+    my $request = $params->{request};
+    my $error   = {
+        error  => 1,
+        status => 'document_sending_failed',
+        method => 'send_to_patron',
+        stage  => 'init',
+        next   => 'illview',
+        value  => $params,
+    };
+
+    return { %$error, message => 'The request has no documents to send.' }
+        unless _core_supports_documents() && $request->documents->count;
+
+    my $result = $request->send_patron_notice('ILL_DOCUMENT_READY');
+    return {
+        %$error,
+        message => "The notice could not be sent. Check the patron's 'Interlibrary loan ready' messaging preference."
+        }
+        unless $result->{result} && @{ $result->{result}->{success} };
+
+    $self->_complete($request);
+    $request->store;
+
+    return {
+        error   => 0,
+        status  => '',
+        message => '',
+        method  => 'send_to_patron',
+        stage   => 'commit',
+        next    => 'illview',
+    };
+}
+
+=head3 _complete
+
+    $self->_complete($request);
+
+Set C<$request> to 'Order Complete', with the completed date and the IncDocs status alias.
+The caller stores it.
+
+=cut
+
+sub _complete {
+    my ( $self, $request ) = @_;
+
+    $request->status('COMP');
+    $request->completed( dt_from_string() );
+    $self->_set_auto_status_alias($request);
+
+    return $request;
 }
 
 =head3 _fail
